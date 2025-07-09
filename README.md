@@ -2,6 +2,5 @@
   <summary>ERD</summary>
   https://www.erdcloud.com/d/m37JphGEKRQrLSpcJ
   <br>
-  ![image](https://github.com/user-attachments/assets/a534ac65-930e-481d-866e-292618ece385.jpg)
-
+  <img width="1561" height="953" alt="Image" src="https://github.com/user-attachments/assets/6f1721b7-6b00-4c34-8df8-20f510066207" />
 </details>

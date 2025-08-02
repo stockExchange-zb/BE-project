@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS user (
     user_id bigint NOT NULL AUTO_INCREMENT COMMENT '회원 아이디',
     user_name varchar(20) NOT NULL COMMENT '회원명',
     user_krw_price bigint NOT NULL COMMENT '보유 원화 현금',
-    created_at datetime NOT NULL COMMENT '가입 시간',
+    created_at timestamp NOT NULL COMMENT '가입 시간',
     PRIMARY KEY (user_id)
 ) ENGINE=INNODB COMMENT='회원';
 
@@ -37,8 +37,8 @@ CREATE TABLE IF NOT EXISTS order_table (
     order_status enum('PENDING','COMPLETED','CANCELLED') NOT NULL COMMENT '주문상태',
     order_remain_count int NOT NULL COMMENT '미체결 수량',
     order_executed_count int NOT NULL DEFAULT 0 COMMENT '체결된 수량',
-    created_at datetime NOT NULL COMMENT '주문 시간',
-    updated_at datetime NOT NULL COMMENT '수정 일자',
+    created_at timestamp NOT NULL COMMENT '주문 시간',
+    updated_at timestamp NOT NULL COMMENT '수정 일자',
     stock_id bigint NOT NULL COMMENT '주식 아이디',
     user_id bigint NOT NULL COMMENT '회원 아이디',
     PRIMARY KEY (order_id),
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS execution (
     execution_id bigint NOT NULL AUTO_INCREMENT COMMENT '체결 아이디',
     execution_count int NOT NULL COMMENT '체결 수량',
     execution_price int NOT NULL COMMENT '체결 가격',
-    created_at datetime NOT NULL COMMENT '체결 시간',
+    created_at timestamp NOT NULL COMMENT '체결 시간',
     execution_buy_order_id bigint NOT NULL COMMENT '매수 주문 체결',
     execution_sell_order_id bigint NOT NULL COMMENT '매도 주문 체결',
     stock_id bigint NOT NULL COMMENT '주식 아이디',
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS holding (
     holding_id bigint NOT NULL AUTO_INCREMENT COMMENT '보유주식 아이디',
     holding_total_price int NOT NULL COMMENT '총 손익',
     holding_quantity int NOT NULL COMMENT '보유 수량',
-    updated_at datetime NOT NULL COMMENT '수정 시간',
+    updated_at timestamp NOT NULL COMMENT '수정 시간',
     user_id bigint NOT NULL COMMENT '회원 아이디',
     stock_id bigint NOT NULL COMMENT '주식 아이디',
     PRIMARY KEY (holding_id),

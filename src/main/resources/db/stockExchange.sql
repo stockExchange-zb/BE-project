@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS order_table (
     order_count int NOT NULL COMMENT '주문 수량',
     order_price int NOT NULL COMMENT '주문 가격',
     order_type enum('BUY','SELL') NOT NULL COMMENT '주문 타입',
-    order_status enum('PENDING','COMPLETED','CANCELLED') NOT NULL COMMENT '주문상태',
+    order_status enum('PENDING','COMPLETED','CANCELLED') NOT NULL COMMENT '주문 상태',
     order_remain_count int NOT NULL COMMENT '미체결 수량',
     order_executed_count int NOT NULL DEFAULT 0 COMMENT '체결된 수량',
     created_at timestamp NOT NULL COMMENT '주문 시간',
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS execution (
     FOREIGN KEY (stock_id) REFERENCES stock(stock_id)
 ) ENGINE=INNODB COMMENT='체결';
 
--- 보유주식 테이블
+-- 보유 주식 테이블
 CREATE TABLE IF NOT EXISTS holding (
     holding_id bigint NOT NULL AUTO_INCREMENT COMMENT '보유주식 아이디',
     holding_total_price int NOT NULL COMMENT '총 손익',

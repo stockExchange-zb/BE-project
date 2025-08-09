@@ -24,7 +24,7 @@ paths:
         - stocks
       summary: 종목 전체 조회
       description: 주식 종목 전체를 조회합니다.
-      operationId: getAllStock
+      operationId: getAllStocks
       responses:
         "200":
           description: OK
@@ -57,7 +57,7 @@ paths:
         - stocks
       summary: 종목 상세 조회
       description: 특정 종목을 상세 조회합니다.
-      operationId: getStock
+      operationId: getStockById
       parameters:
         - name: stockId
           in: path
@@ -78,7 +78,7 @@ paths:
         - orders
       summary: 주문 전체 조회
       description: 주문 목록 전체를 조회합니다.
-      operationId: getAllOrder
+      operationId: getAllOrders
       responses:
         "200":
           description: OK
@@ -129,7 +129,7 @@ paths:
         - orders
       summary: 주문 상세 조회
       description: 특정 주문을 상세 조회합니다.
-      operationId: getOrder
+      operationId: getOrderById
       parameters:
         - name: orderId
           in: path
@@ -149,7 +149,7 @@ paths:
         - orders
       summary: 주문 수정
       description: 체결되지 않은 주문을 수정합니다.
-      operationId: updateOrder
+      operationId: updateOrderById
       parameters:
         - name: orderId
           in: path
@@ -175,7 +175,7 @@ paths:
         - orders
       summary: 주문 취소
       description: 체결되지 않은 주문을 취소합니다.
-      operationId: deleteOrder
+      operationId: deleteOrderById
       parameters:
         - name: orderId
           in: path
@@ -194,7 +194,7 @@ paths:
         - user
       summary: 보유 주식 전체 조회
       description: 보유한 주식 전체를 조회합니다.
-      operationId: getAllHolding
+      operationId: getAllHoldings
       responses:
         "200":
           description: OK
@@ -216,7 +216,7 @@ paths:
         - user
       summary: 보유 주식 상세 조회
       description: 특정 보유주식을 상세 조회합니다.
-      operationId: getHolding
+      operationId: getHoldingById
       parameters:
         - name: holdingId
           in: path
@@ -231,13 +231,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HoldingResDTO"
+  /api/v1/user-holding/krw/{userId}:
+    get:
+      tags:
+        - user
+      summary: 보유 현금 조회
+      description: 보유 현금을 조회합니다.
+      operationId: getHoldingKRW
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KRWResDTO"
   /api/v1/execution:
     get:
       tags:
         - execution
       summary: 체결 내역 전체 조회
       description: 체결 내역 전체를 조회합니다.
-      operationId: getAllExecution
+      operationId: getAllExecutions
       responses:
         "200":
           description: OK
@@ -265,7 +286,7 @@ paths:
         - execution
       summary: 체결 상세 조회
       description: 특정 체결 내역을 상세 조회합니다.
-      operationId: getExecution
+      operationId: getExecutionById
       parameters:
         - name: executionId
           in: path
@@ -515,4 +536,30 @@ components:
         - executionCount
         - executionPrice
         - createdAt
-
+    KRWResDTO:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: 회원 아이디
+          example: 1
+        userName:
+          type: string
+          description: 회원명
+          example: "가나다"
+        userKrwPrice:
+          type: integer
+          format: int64
+          description: 보유 원화 현금
+          example: 100000
+        createdAt:
+          type: string
+          description: 가입 시간
+          format: date-time
+          example: "2025-08-09T10:30:00Z"
+      required:
+        - userId
+        - userName
+        - userKrwPrice
+        - createdAt

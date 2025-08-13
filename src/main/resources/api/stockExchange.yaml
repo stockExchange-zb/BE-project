@@ -4,10 +4,10 @@ info:
   description: 주식거래소 REST API 문서
   version: 1.0.0
 servers:
-- url: https://virtserver.swaggerhub.com/seroming/API_stockExchange/1.0.0
-  description: SwaggerHub API Auto Mocking
-- url: http://localhost:8080
-  description: 개발 서버
+  - url: https://virtserver.swaggerhub.com/seroming/API_stockExchange/1.0.0
+    description: SwaggerHub API Auto Mocking
+  - url: http://localhost:8080
+    description: 개발 서버
 tags:
   - name: users
     description: 회원 API
@@ -339,7 +339,6 @@ paths:
                     executionCount: 10
                     executionPrice: 80000
                     createdAt: "2025-08-09T11:30:00Z"
-
   /api/v1/users/{userId}/execution/{executionId}:
     get:
       tags:

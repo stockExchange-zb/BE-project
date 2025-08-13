@@ -9,7 +9,7 @@ servers:
   - url: http://localhost:8080
     description: 개발 서버
 tags:
-  - name: user
+  - name: users
     description: 회원 API
   - name: stocks
     description: 주식 종목 API
@@ -51,7 +51,7 @@ paths:
                     stockIpo: "KOSDAQ"
                     stockPrice: 52000
 
-  /api/v1/stock/{stockId}:
+  /api/v1/stocks/{stockId}:
     get:
       tags:
         - stocks
@@ -72,13 +72,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StockResDTO"
-  /api/v1/orders:
+  /api/v1/users/{userId}/orders:
     get:
       tags:
         - orders
       summary: 주문 전체 조회
       description: 주문 목록 전체를 조회합니다.
       operationId: getAllOrders
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
       responses:
         "200":
           description: OK
@@ -87,7 +95,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/OrderResDTO"
+                  $ref: "#/components/schemas/OrderListResDTO"
                 example:
                   - orderId: 1
                     orderCount: 10
@@ -110,6 +118,14 @@ paths:
       summary: 주문 등록
       description: 주문을 등록합니다.
       operationId: createOrder
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
       requestBody:
         required: true
         content:
@@ -123,7 +139,7 @@ paths:
           description: 잘못된 주문 등록 요청
         "404":
           description: 종목을 찾을 수 없음
-  /api/v1/order/{orderId}:
+  /api/v1/users/{userId}/order/{orderId}:
     get:
       tags:
         - orders
@@ -131,6 +147,13 @@ paths:
       description: 특정 주문을 상세 조회합니다.
       operationId: getOrderById
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
         - name: orderId
           in: path
           required: true
@@ -143,7 +166,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrderResDTO"
+                $ref: "#/components/schemas/OrderDetailResDTO"
     put:
       tags:
         - orders
@@ -151,6 +174,13 @@ paths:
       description: 체결되지 않은 주문을 수정합니다.
       operationId: updateOrderById
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
         - name: orderId
           in: path
           required: true
@@ -177,6 +207,13 @@ paths:
       description: 체결되지 않은 주문을 취소합니다.
       operationId: deleteOrderById
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
         - name: orderId
           in: path
           required: true
@@ -188,13 +225,21 @@ paths:
           description: 주문 취소 성공
         "400":
           description: 이미 체결된 주문은 취소할 수 없습니다.
-  /api/v1/user-holding:
+  /api/v1/users/{userId}/holding:
     get:
       tags:
-        - user
+        - users
       summary: 보유 주식 전체 조회
       description: 보유한 주식 전체를 조회합니다.
       operationId: getAllHoldings
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
       responses:
         "200":
           description: OK
@@ -210,14 +255,21 @@ paths:
                     holdingQuantity: 10
                     updatedAt: "2025-08-09T07:41:45.139Z"
                     stockName: "삼성전자"
-  /api/v1/user-holding/{holdingId}:
+  /api/v1/users/{userId}/holding/{holdingId}:
     get:
       tags:
-        - user
+        - users
       summary: 보유 주식 상세 조회
       description: 특정 보유주식을 상세 조회합니다.
       operationId: getHoldingById
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
         - name: holdingId
           in: path
           required: true
@@ -231,10 +283,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HoldingResDTO"
-  /api/v1/user-holding/krw/{userId}:
+  /api/v1/users/{userId}/krw:
     get:
       tags:
-        - user
+        - users
       summary: 보유 현금 조회
       description: 보유 현금을 조회합니다.
       operationId: getHoldingKRW
@@ -252,13 +304,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/KRWResDTO"
-  /api/v1/execution:
+  /api/v1/users/{userId}/execution:
     get:
       tags:
         - execution
       summary: 체결 내역 전체 조회
       description: 체결 내역 전체를 조회합니다.
       operationId: getAllExecutions
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
       responses:
         "200":
           description: OK
@@ -279,8 +339,7 @@ paths:
                     executionCount: 10
                     executionPrice: 80000
                     createdAt: "2025-08-09T11:30:00Z"
-
-  /api/v1/execution/{executionId}:
+  /api/v1/users/{userId}/execution/{executionId}:
     get:
       tags:
         - execution
@@ -288,6 +347,13 @@ paths:
       description: 특정 체결 내역을 상세 조회합니다.
       operationId: getExecutionById
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
         - name: executionId
           in: path
           required: true
@@ -367,7 +433,37 @@ components:
         - orderType
         - stockId
         - userId
-    OrderResDTO:  # 주문 조회 DTO
+    OrderListResDTO: # 주문 전체 조회 DTO
+      type: object
+      properties:
+        orderId:
+          type: integer
+          format: int64
+          example: 1
+          description: 주문 아이디
+        orderCount:
+          type: integer
+          example: 10
+          description: 주문 수량
+        orderType:
+          type: string
+          enum:
+            - BUY
+            - SELL
+          example: "BUY"
+        orderStatus:
+          type: string
+          enum:
+            - PENDING
+            - COMPLETED
+            - CANCELLED
+          example: "PENDING"
+        stockId:
+          type: integer
+          format: int64
+          example: 1
+          description: 주식 아이디
+    OrderDetailResDTO:  # 주문 상세 조회 DTO
       type: object
       properties:
         stockId:

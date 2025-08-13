@@ -9,335 +9,526 @@ servers:
 - url: http://localhost:8080
   description: 개발 서버
 tags:
-- name: user
-  description: 회원 API
-- name: stock
-  description: 주식 종목 API
-- name: order
-  description: 주문 API
-- name: execution
-  description: 체결 API
-- name: holding
-  description: 보유 주식 API
+  - name: users
+    description: 회원 API
+  - name: stocks
+    description: 주식 종목 API
+  - name: orders
+    description: 주문 API
+  - name: execution
+    description: 체결 API
 paths:
-  /api/v1/stock:
+  /api/v1/stocks:
     get:
       tags:
-      - stock
+        - stocks
       summary: 종목 전체 조회
       description: 주식 종목 전체를 조회합니다.
-      operationId: getAllStock
+      operationId: getAllStocks
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                type: object
-  /api/v1/stock/{stockId}:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockResDTO"
+                example:
+                  - stockId: 1
+                    stockName: "삼성전자"
+                    stockNumber: 5930
+                    stockIpo: "KOSPI"
+                    stockPrice: 75000
+                  - stockId: 2
+                    stockName: "SK하이닉스"
+                    stockNumber: 660
+                    stockIpo: "KOSPI"
+                    stockPrice: 130000
+                  - stockId: 3
+                    stockName: "카카오"
+                    stockNumber: 35720
+                    stockIpo: "KOSDAQ"
+                    stockPrice: 52000
+
+  /api/v1/stocks/{stockId}:
     get:
       tags:
-      - stock
+        - stocks
       summary: 종목 상세 조회
       description: 특정 종목을 상세 조회합니다.
-      operationId: getStock
+      operationId: getStockById
       parameters:
-      - name: stockId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+        - name: stockId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/inline_response_200"
-  /api/v1/order:
+                $ref: "#/components/schemas/StockResDTO"
+  /api/v1/users/{userId}/orders:
     get:
       tags:
-      - order
+        - orders
       summary: 주문 전체 조회
       description: 주문 목록 전체를 조회합니다.
-      operationId: getAllOrder
+      operationId: getAllOrders
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                type: object
+                type: array
+                items:
+                  $ref: "#/components/schemas/OrderListResDTO"
+                example:
+                  - orderId: 1
+                    orderCount: 10
+                    orderType: "BUY"
+                    orderStatus: "PENDING"
+                    stockId: 1
+                  - orderId: 2
+                    orderCount: 10
+                    orderType: "BUY"
+                    orderStatus: "COMPLETED"
+                    stockId: 2
+                  - orderId: 3
+                    orderCount: 10
+                    orderType: "SELL"
+                    orderStatus: "CANCELLED"
+                    stockId: 3
     post:
       tags:
-      - order
+        - orders
       summary: 주문 등록
       description: 주문을 등록합니다.
       operationId: createOrder
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/v1_order_body"
-        required: true
+              $ref: "#/components/schemas/OrderReqDTO"
       responses:
         "201":
           description: 주문 등록 성공
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/inline_response_201"
         "400":
           description: 잘못된 주문 등록 요청
         "404":
           description: 종목을 찾을 수 없음
-  /api/v1/order/{orderId}:
+  /api/v1/users/{userId}/order/{orderId}:
     get:
       tags:
-      - order
+        - orders
       summary: 주문 상세 조회
       description: 특정 주문을 상세 조회합니다.
-      operationId: getOrder
+      operationId: getOrderById
       parameters:
-      - name: orderId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/inline_response_200_1"
+                $ref: "#/components/schemas/OrderDetailResDTO"
     put:
       tags:
-      - order
+        - orders
       summary: 주문 수정
       description: 체결되지 않은 주문을 수정합니다.
-      operationId: updateOrder
+      operationId: updateOrderById
       parameters:
-      - name: orderId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/order_orderId_body"
+              $ref: "#/components/schemas/OrderUpdateDTO"
         required: true
       responses:
         "200":
           description: 주문 수정 성공
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/inline_response_200_2"
         "400":
           description: 잘못된 주문 수정 요청
         "404":
           description: 주문을 찾을 수 없음
     delete:
       tags:
-      - order
+        - orders
       summary: 주문 취소
       description: 체결되지 않은 주문을 취소합니다.
-      operationId: deleteOrder
+      operationId: deleteOrderById
       parameters:
-      - name: orderId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
       responses:
         "200":
           description: 주문 취소 성공
         "400":
           description: 이미 체결된 주문은 취소할 수 없습니다.
-  /api/v1/holding:
+  /api/v1/users/{userId}/holding:
     get:
       tags:
-      - holding
+        - users
       summary: 보유 주식 전체 조회
       description: 보유한 주식 전체를 조회합니다.
-      operationId: getAllHolding
+      operationId: getAllHoldings
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                type: object
-  /api/v1/holding/{holdingId}:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HoldingResDTO"
+                example:
+                  - holdingId: 1
+                    holdingTotalPrice: 1000000
+                    holdingQuantity: 10
+                    updatedAt: "2025-08-09T07:41:45.139Z"
+                    stockName: "삼성전자"
+  /api/v1/users/{userId}/holding/{holdingId}:
     get:
       tags:
-      - holding
+        - users
       summary: 보유 주식 상세 조회
       description: 특정 보유주식을 상세 조회합니다.
-      operationId: getHolding
+      operationId: getHoldingById
       parameters:
-      - name: holdingId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
+        - name: holdingId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/inline_response_200_3"
-  /api/v1/execution:
+                $ref: "#/components/schemas/HoldingResDTO"
+  /api/v1/users/{userId}/krw:
     get:
       tags:
-      - execution
+        - users
+      summary: 보유 현금 조회
+      description: 보유 현금을 조회합니다.
+      operationId: getHoldingKRW
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KRWResDTO"
+  /api/v1/users/{userId}/execution:
+    get:
+      tags:
+        - execution
       summary: 체결 내역 전체 조회
       description: 체결 내역 전체를 조회합니다.
-      operationId: getAllExecution
+      operationId: getAllExecutions
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                type: object
-  /api/v1/execution/{executionId}:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExecutionResDTO"
+                example:
+                  - executionId: 1
+                    stockName: "삼성전자"
+                    executionCount: 10
+                    executionPrice: 75000
+                    createdAt: "2025-08-09T10:30:00Z"
+                  - executionId: 2
+                    stockName: "현대자동차"
+                    executionCount: 10
+                    executionPrice: 80000
+                    createdAt: "2025-08-09T11:30:00Z"
+
+  /api/v1/users/{userId}/execution/{executionId}:
     get:
       tags:
-      - execution
+        - execution
       summary: 체결 상세 조회
       description: 특정 체결 내역을 상세 조회합니다.
-      operationId: getExecution
+      operationId: getExecutionById
       parameters:
-      - name: executionId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: 회원 아이디
+        - name: executionId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/inline_response_200_4"
+                $ref: "#/components/schemas/ExecutionResDTO"
 components:
   schemas:
-    inline_response_200:
+    StockResDTO: #종목 조회 DTO
       type: object
       properties:
         stockId:
           type: integer
+          format: int64
+          description: 주식 아이디
+          example: 1
         stockName:
           type: string
+          maxLength: 255
+          description: 종목명
+          example: "삼성전자"
         stockNumber:
           type: integer
+          description: 종목 코드
+          example: 5930
         stockIpo:
           type: string
-          enum:
-          - KOSPI
-          - KOSDAQ
+          enum: [ "KOSPI", "KOSDAQ" ]
+          example: "KOSPI"
+          description: 상장시장
         stockPrice:
           type: integer
-    v1_order_body:
+          description: 종목 가격(원)
+          example: 75000
       required:
-      - orderCount
-      - orderPrice
-      - orderType
-      - stockId
+        - stockId
+        - stockName
+        - stockNumber
+        - stockIpo
+        - stockPrice
+    OrderReqDTO: # 주문 등록 DTO
       type: object
       properties:
-        stockId:
-          type: integer
-          description: 주식 종목 id
         orderCount:
-          minimum: 1
           type: integer
           description: 주문 수량
+          example: 10
         orderPrice:
           type: integer
           description: 주문 가격
+          example: 75000
         orderType:
           type: string
+          enum: [ "BUY", "SELL" ]
           description: 주문 타입
-          enum:
-          - BUY
-          - SELL
-    inline_response_201:
-      type: object
-      properties:
-        orderId:
-          type: integer
-        orderCount:
-          type: integer
-        orderPrice:
-          type: integer
-        orderType:
-          type: string
-          enum:
-          - BUY
-          - SELL
-        orderStatus:
-          type: string
-          enum:
-          - PENDING
-          - COMPLETED
-          - CANCELLED
-        orderRemainCount:
-          type: integer
-        orderExecutedCount:
-          type: integer
-        createdAt:
-          type: string
-          format: date-time
-        updateAt:
-          type: string
-          format: date-time
-    inline_response_200_1:
-      type: object
-      properties:
-        orderId:
-          type: integer
+          example: "BUY"
         stockId:
           type: integer
+          format: int64
+          description: 주식 아이디
+          example: 1
+        userId:
+          type: integer
+          format: int64
+          description: 회원 아이디
+          example: 1
+      required:
+        - orderCount
+        - orderPrice
+        - orderType
+        - stockId
+        - userId
+    OrderListResDTO: # 주문 전체 조회 DTO
+      type: object
+      properties:
+        orderId:
+          type: integer
+          format: int64
+          example: 1
+          description: 주문 아이디
         orderCount:
           type: integer
-        orderPrice:
-          type: integer
+          example: 10
+          description: 주문 수량
         orderType:
           type: string
           enum:
-          - BUY
-          - SELL
+            - BUY
+            - SELL
+          example: "BUY"
         orderStatus:
           type: string
           enum:
-          - PENDING
-          - COMPLETED
-          - CANCELLED
+            - PENDING
+            - COMPLETED
+            - CANCELLED
+          example: "PENDING"
+        stockId:
+          type: integer
+          format: int64
+          example: 1
+          description: 주식 아이디
+    OrderDetailResDTO:  # 주문 상세 조회 DTO
+      type: object
+      properties:
+        stockId:
+          type: integer
+          format: int64
+          example: 1
+          description: 주식 아이디
+        userId:
+          type: integer
+          format: int64
+          example: 1
+          description: 회원 아이디
+        orderId:
+          type: integer
+          example: 1
+          description: 주문 아이디
+        orderCount:
+          type: integer
+          example: 20
+          description: 주문 수량
+        orderPrice:
+          type: integer
+          example: 75000
+          description: 주문 가격
+        orderType:
+          type: string
+          example: "SELL"
+          enum:
+            - BUY
+            - SELL
+          description: 주문 타입
+        orderStatus:
+          type: string
+          enum:
+            - PENDING
+            - COMPLETED
+            - CANCELLED
+          example: "PENDING"
+          description: 주문 상태
         orderRemainCount:
           type: integer
+          example: 10
         orderExecutedCount:
           type: integer
+          example: 0
+          description: 체결된 수량
         createdAt:
           type: string
-          description: 주문 시간
           format: date-time
         updatedAt:
           type: string
-          description: 수정 일자
           format: date-time
-    order_orderId_body:
+      required:
+        - orderId
+        - orderCount
+        - orderPrice
+        - orderType
+        - orderStatus
+        - orderExecutedCount
+        - stockId
+        - userId
+        - createdAt
+        - updatedAt
+    OrderUpdateDTO: # 주문 수정 DTO
       type: object
       properties:
         orderCount:
@@ -348,75 +539,124 @@ components:
         orderPrice:
           type: integer
           description: 수정할 주문 가격
-    inline_response_200_2:
+          example: 65000
+    HoldingResDTO: # 보유 주식 조회 DTO
       type: object
       properties:
-        orderId:
+        userId:
           type: integer
-        orderCount:
-          type: integer
-        orderPrice:
-          type: integer
-        orderType:
-          type: string
-          enum:
-          - PENDING
-          - COMPLETED
-          - CANCELLED
-        orderRemainCount:
-          type: integer
-        orderExecutedCount:
-          type: integer
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-    inline_response_200_3:
-      type: object
-      properties:
+          format: int64
+          example: 1
         holdingId:
           type: integer
+          format: int64
+          example: 1
         stockId:
           type: integer
+          format: int64
+          example: 1
+          description: 주식 아이디
         stockName:
           type: string
           description: 종목명
+          example: "삼성전자"
         holdingQuantity:
           type: integer
           description: 보유 수량
+          example: 50
         holdingTotalPrice:
           type: integer
           description: 총 손익
+          example: 1000000
         currentStockPrice:
           type: integer
           description: 현재 주가
+          example: 71800
         updatedAt:
           type: string
           format: date-time
-    inline_response_200_4:
+      required:
+        - holdingId
+        - stockId
+        - stockName
+        - holdingQuantity
+        - holdingTotalPrice
+        - currentStockPrice
+        - userId
+        - updatedAt
+    ExecutionResDTO: # 체결 조회 DTO
       type: object
       properties:
         executionId:
           type: integer
+          format: int64
+          description: 체결 아이디
+          example: 1
         stockId:
           type: integer
+          format: int64
+          description: 종목 아이디
+          example: 1
         stockName:
           type: string
+          description: 종목 이름
+          example: "삼성전자"
         executionCount:
           type: integer
           description: 체결 수량
+          example: 10
         executionPrice:
           type: integer
           description: 체결 가격
+          example: 700000
         executionBuyOrderId:
           type: integer
+          format: int64
           description: 매수 주문 ID
+          nullable: true
+          example: 2
         executionSellOrderId:
           type: integer
+          format: int64
           description: 매도 주문 ID
+          nullable: true
+          example: null
         createdAt:
           type: string
           description: 체결 시간
           format: date-time
+          example: "2025-08-09T10:30:00Z"
+      required:
+        - executionId
+        - stockId
+        - stockName
+        - executionCount
+        - executionPrice
+        - createdAt
+    KRWResDTO:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: 회원 아이디
+          example: 1
+        userName:
+          type: string
+          description: 회원명
+          example: "가나다"
+        userKrwPrice:
+          type: integer
+          format: int64
+          description: 보유 원화 현금
+          example: 100000
+        createdAt:
+          type: string
+          description: 가입 시간
+          format: date-time
+          example: "2025-08-09T10:30:00Z"
+      required:
+        - userId
+        - userName
+        - userKrwPrice
+        - createdAt

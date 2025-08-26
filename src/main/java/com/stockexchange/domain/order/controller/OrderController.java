@@ -2,7 +2,6 @@ package com.stockexchange.domain.order.controller;
 
 import com.stockexchange.domain.order.dto.OrderDetailResDTO;
 import com.stockexchange.domain.order.dto.OrderListResDTO;
-import com.stockexchange.domain.order.dto.OrderUpdateDTO;
 import com.stockexchange.domain.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -42,12 +41,11 @@ public class OrderController {
 
     @PutMapping("/{userId}/orders/{orderId}")
     @Operation(summary = "주문 수정", description = "체결되지 않은 주문을 수정합니다.")
-    public ResponseEntity<OrderUpdateDTO> updateOrderById(@Parameter(description = "주문 아이디")
-                                                             @PathVariable Long userId,
-                                                             @PathVariable Long orderId,
-                                                             @RequestBody OrderUpdateDTO orderUpdateDTO) {
+    public ResponseEntity<Integer> updateOrderById(@Parameter(description = "주문 아이디")
+                                                          @PathVariable Long userId,
+                                                          @PathVariable Long orderId) {
 //        TODO
-        return ResponseEntity.ok().body(new OrderUpdateDTO());
+        return ResponseEntity.ok().body(201);
     }
 
     @DeleteMapping("/{userId}/orders/{orderId}")

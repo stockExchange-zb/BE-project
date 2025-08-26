@@ -95,7 +95,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/OrderResDTO"
+                  $ref: "#/components/schemas/OrderListResDTO"
                 example:
                   - orderId: 1
                     orderCount: 10
@@ -166,7 +166,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrderResDTO"
+                $ref: "#/components/schemas/OrderDetailResDTO"
     put:
       tags:
         - orders

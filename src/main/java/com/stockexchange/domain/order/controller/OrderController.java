@@ -1,50 +1,58 @@
 package com.stockexchange.domain.order.controller;
 
-import com.stockexchange.domain.order.dto.OrderResDTO;
+import com.stockexchange.domain.order.dto.OrderDetailResDTO;
+import com.stockexchange.domain.order.dto.OrderListResDTO;
 import com.stockexchange.domain.order.dto.OrderUpdateDTO;
+import com.stockexchange.domain.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/orders")
+@RequiredArgsConstructor
+@RequestMapping("/api/v1/users")
 public class OrderController {
 
-    @GetMapping
+    private final OrderService orderService;
+
+    @GetMapping("/{userId}/orders")
     @Operation(summary = "주문 전체 조회", description = "주문 목록 전체를 조회합니다")
-    public ResponseEntity<List<OrderResDTO>> getAllOrders() {
-//        TODO
-        return ResponseEntity.ok().body(List.of());
+    public ResponseEntity<List<OrderListResDTO>> getAllOrders(@PathVariable Long userId) {
+        List<OrderListResDTO> orderListResDTOList = orderService.getAllOrders(userId);
+        return ResponseEntity.ok().body(orderListResDTOList);
     }
 
-    @GetMapping("/{orderId}")
+    @GetMapping("/{userId}/orders/{orderId}")
     @Operation(summary = "주문 상세 조회", description = "특정 주문을 상세 조회합니다.")
-    public ResponseEntity<OrderResDTO> getOrderById(@PathVariable("orderId") String orderId) {
-        return ResponseEntity.ok().body(new OrderResDTO());
+    public ResponseEntity<OrderDetailResDTO> getOrderById(@PathVariable("userId") Long userId, @PathVariable("orderId") Long orderId) {
+        OrderDetailResDTO orderDetailResDTO = orderService.getOrderDetail(userId, orderId);
+        return ResponseEntity.ok().body(orderDetailResDTO);
     }
 
-    @PostMapping
+    @PostMapping("/{userId}/orders")
     @Operation(summary = "주문 등록", description = "주문을 등록합니다.")
-    public ResponseEntity<Integer> createOrder(@RequestBody OrderResDTO order) {
+    public ResponseEntity<Integer> createOrder(@PathVariable Long userId, @RequestBody OrderListResDTO order) {
 //        TODO
         return ResponseEntity.ok(201);
     }
 
-    @PutMapping("/{orderId}")
+    @PutMapping("/{userId}/orders/{orderId}")
     @Operation(summary = "주문 수정", description = "체결되지 않은 주문을 수정합니다.")
-    public ResponseEntity<OrderResDTO> updateOrderById(@Parameter(description = "주문 아이디")
-                                                       @PathVariable Long orderId,
-                                                       @RequestBody OrderUpdateDTO orderUpdateDTO) {
+    public ResponseEntity<OrderUpdateDTO> updateOrderById(@Parameter(description = "주문 아이디")
+                                                             @PathVariable Long userId,
+                                                             @PathVariable Long orderId,
+                                                             @RequestBody OrderUpdateDTO orderUpdateDTO) {
 //        TODO
-        return ResponseEntity.ok().body(new OrderResDTO());
+        return ResponseEntity.ok().body(new OrderUpdateDTO());
     }
 
-    @DeleteMapping("/{orderId}")
+    @DeleteMapping("/{userId}/orders/{orderId}")
     @Operation(summary = "주문 취소", description = "체결되지 않은 주문을 취소합니다.")
-    public ResponseEntity<Integer> deleteOrderById(@PathVariable("orderId") String orderId) {
+    public ResponseEntity<Integer> deleteOrderById(@PathVariable Long userId, @PathVariable("orderId") String orderId) {
 //        TODO
         return ResponseEntity.ok().body(201);
     }

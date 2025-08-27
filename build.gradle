@@ -22,10 +22,23 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.projectlombok:lombok'
+
+    // lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+
+//    embedded redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+//    test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation('it.ozimov:embedded-redis:0.7.3'){
+        exclude group: 'org.slf4j', module: 'slf4j-simple'
+        // embedded redis - slf4j-simple 제외하여 로깅 충돌 방지
+    }
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

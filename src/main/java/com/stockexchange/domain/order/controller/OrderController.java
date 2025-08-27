@@ -50,7 +50,7 @@ public class OrderController {
 
     @DeleteMapping("/{userId}/orders/{orderId}")
     @Operation(summary = "주문 취소", description = "체결되지 않은 주문을 취소합니다.")
-    public ResponseEntity<Integer> deleteOrderById(@PathVariable Long userId, @PathVariable("orderId") String orderId) {
+    public ResponseEntity<Integer> deleteOrderById(@PathVariable Long userId, @PathVariable("orderId") Long orderId) {
 //        TODO
         return ResponseEntity.ok().body(201);
     }

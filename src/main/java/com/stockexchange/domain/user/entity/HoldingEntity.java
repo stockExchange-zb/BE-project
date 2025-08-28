@@ -2,11 +2,13 @@ package com.stockexchange.domain.user.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
 
 @Entity
 @Getter
+@NoArgsConstructor
 @Table(name = "holding")
 public class HoldingEntity {
     @Id

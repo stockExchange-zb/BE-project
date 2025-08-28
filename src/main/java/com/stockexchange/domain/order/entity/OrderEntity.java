@@ -4,6 +4,7 @@ import com.stockexchange.domain.stock.entity.StockEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -12,6 +13,7 @@ import java.time.ZonedDateTime;
 @Entity
 @Getter
 @NoArgsConstructor
+@ToString(exclude = {"stock"})
 @Table(name = "order_table")
 public class OrderEntity {
 

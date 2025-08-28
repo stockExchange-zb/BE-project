@@ -2,12 +2,14 @@ package com.stockexchange.domain.user.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.ZonedDateTime;
 
 @Entity
 @Getter
+@NoArgsConstructor
 @Table(name = "user")
 public class UserEntity {
 

@@ -2,9 +2,11 @@ package com.stockexchange.domain.stock.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@NoArgsConstructor
 @Table(name = "stock")
 public class StockEntity {
 

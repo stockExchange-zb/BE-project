@@ -5,15 +5,15 @@ import com.stockexchange.domain.order.entity.OrderType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @AllArgsConstructor
 public class OrderListResDTO {
     private Long orderId;
-    private Integer orderCount;
+    private int orderCount;
     private OrderType orderType;
     private OrderStatus orderStatus;
     private Long stockId;
-    private LocalDateTime createdAt;
+    private ZonedDateTime createdAt;
 }

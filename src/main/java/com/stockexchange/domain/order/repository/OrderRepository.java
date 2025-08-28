@@ -2,7 +2,7 @@ package com.stockexchange.domain.order.repository;
 
 import com.stockexchange.domain.order.dto.OrderDetailResDTO;
 import com.stockexchange.domain.order.dto.OrderListResDTO;
-import com.stockexchange.domain.order.entity.OrderTable;
+import com.stockexchange.domain.order.entity.OrderEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface OrderRepository extends JpaRepository<OrderTable, Long> {
+public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
 
     // 주문 목록 전체 조회
     @Query("""
@@ -23,8 +23,8 @@ public interface OrderRepository extends JpaRepository<OrderTable, Long> {
                         o.stock.stockId,
                         o.createdAt
             )
-            FROM OrderTable o
-            WHERE o.user.userId = :userId
+            FROM OrderEntity o
+            WHERE o.userId = :userId
             ORDER BY o.createdAt DESC
             """)
     List<OrderListResDTO> findAllByUserId(@Param("userId") Long userId);
@@ -43,8 +43,8 @@ public interface OrderRepository extends JpaRepository<OrderTable, Long> {
                     o.createdAt,
                     o.updatedAt
             )
-            FROM OrderTable o
-            WHERE o.user.userId = :userId AND o.orderId = :orderId
+            FROM OrderEntity o
+            WHERE o.userId = :userId AND o.orderId = :orderId
             ORDER BY o.createdAt DESC
             """)
     OrderDetailResDTO findByOrderIdAndUserId(@Param("userId") Long userId, @Param("orderId")Long orderId);

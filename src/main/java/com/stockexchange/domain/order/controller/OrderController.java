@@ -6,6 +6,7 @@ import com.stockexchange.domain.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,14 +37,15 @@ public class OrderController {
     @Operation(summary = "주문 등록", description = "주문을 등록합니다.")
     public ResponseEntity<Integer> createOrder(@PathVariable Long userId, @RequestBody OrderListResDTO order) {
 //        TODO
-        return ResponseEntity.ok(201);
+//        return ResponseEntity.status(HttpStatus.CREATED).body();
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{userId}/orders/{orderId}")
     @Operation(summary = "주문 수정", description = "체결되지 않은 주문을 수정합니다.")
     public ResponseEntity<Integer> updateOrderById(@Parameter(description = "주문 아이디")
-                                                          @PathVariable Long userId,
-                                                          @PathVariable Long orderId) {
+                                                   @PathVariable Long userId,
+                                                   @PathVariable Long orderId) {
 //        TODO
         return ResponseEntity.ok().body(201);
     }

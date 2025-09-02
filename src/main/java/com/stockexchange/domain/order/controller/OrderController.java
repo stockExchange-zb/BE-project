@@ -16,6 +16,8 @@ import java.util.List;
 @RequestMapping("/api/v1/users")
 public class OrderController {
 
+    private static final int SUCCESS_CODE = 200;
+
     private final OrderService orderService;
 
     @GetMapping("/{userId}/orders")
@@ -36,22 +38,22 @@ public class OrderController {
     @Operation(summary = "주문 등록", description = "주문을 등록합니다.")
     public ResponseEntity<Integer> createOrder(@PathVariable Long userId, @RequestBody OrderListResDTO order) {
 //        TODO
-        return ResponseEntity.ok(201);
+        return ResponseEntity.ok().body(SUCCESS_CODE);
     }
 
     @PutMapping("/{userId}/orders/{orderId}")
     @Operation(summary = "주문 수정", description = "체결되지 않은 주문을 수정합니다.")
     public ResponseEntity<Integer> updateOrderById(@Parameter(description = "주문 아이디")
-                                                          @PathVariable Long userId,
-                                                          @PathVariable Long orderId) {
+                                                   @PathVariable Long userId,
+                                                   @PathVariable Long orderId) {
 //        TODO
-        return ResponseEntity.ok().body(201);
+        return ResponseEntity.ok().body(SUCCESS_CODE);
     }
 
     @DeleteMapping("/{userId}/orders/{orderId}")
     @Operation(summary = "주문 취소", description = "체결되지 않은 주문을 취소합니다.")
     public ResponseEntity<Integer> deleteOrderById(@PathVariable Long userId, @PathVariable("orderId") Long orderId) {
 //        TODO
-        return ResponseEntity.ok().body(201);
+        return ResponseEntity.ok().body(SUCCESS_CODE);
     }
 }

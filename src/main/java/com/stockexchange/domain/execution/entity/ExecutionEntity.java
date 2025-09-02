@@ -4,13 +4,18 @@ import com.stockexchange.domain.order.entity.OrderEntity;
 import com.stockexchange.domain.stock.entity.StockEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 
 @Entity
 @Getter
-@Table(name="execution")
+@NoArgsConstructor
+@ToString(exclude = {"buyOrder", "sellOrder", "stock"})
+@Table(name = "execution")
 public class ExecutionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,15 +25,15 @@ public class ExecutionEntity {
     @Column(name = "execution_count", nullable = false)
     private int executionCount;
 
-    @Column(name = "execution_price", nullable = false)
-    private long executionPrice;
+    @Column(name = "execution_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal executionPrice;
 
     @Column(name = "created_at", nullable = false)
     @CreationTimestamp
     private ZonedDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="execution_buy_order_id", nullable = true)
+    @JoinColumn(name = "execution_buy_order_id", nullable = true)
     private OrderEntity buyOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -36,6 +41,6 @@ public class ExecutionEntity {
     private OrderEntity sellOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="stock_id", nullable = false)
+    @JoinColumn(name = "stock_id", nullable = false)
     private StockEntity stock;
 }

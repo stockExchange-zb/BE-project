@@ -65,7 +65,6 @@ class OrderControllerTest {
     }
 
     @Test
-    @Disabled
     @DisplayName("주문 전체 목록 조회 테스트 - 데이터 완전히 나오는 경우")
     void getOrders_AllData() {
 //        Given
@@ -87,8 +86,6 @@ class OrderControllerTest {
 //        Then : 데이터 검증
         Assertions.assertNotNull(redisResult);
         Assertions.assertEquals(3, redisResult.size());
-
-        throw new NotImplementedException();
     }
 
     @Test
@@ -123,7 +120,6 @@ class OrderControllerTest {
     }
 
     @Test
-    @Disabled
     @DisplayName("특정 주문을 상세 조회 테스트 - 데이터 완전한 경우")
     void getOrderById_AllData() {
 

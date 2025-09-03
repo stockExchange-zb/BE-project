@@ -4,10 +4,12 @@ import com.stockexchange.domain.order.entity.OrderStatus;
 import com.stockexchange.domain.order.entity.OrderType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
 
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 public class OrderDetailResDTO {
     private Long stockId;

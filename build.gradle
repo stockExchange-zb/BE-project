@@ -30,8 +30,10 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 
-//    embedded redis
+//    spring data redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+//    ZoneDateTime 처리 위한 JSON 직렬화 위한 모듈
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
 //    test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

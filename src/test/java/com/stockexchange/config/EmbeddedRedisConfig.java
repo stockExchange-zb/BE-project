@@ -8,9 +8,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
 import redis.embedded.RedisServer;
 
 import java.io.IOException;
@@ -55,27 +52,4 @@ public class EmbeddedRedisConfig {
         factory.afterPropertiesSet(); // 연결 설정 초기화
         return factory;
     }
-
-    /* 테스트용 RedisTemplate 설정
-     * - key: String으로 직렬화
-     * - Value: JSON으로 직렬화
-     * @Primary로 기본 RedisTemplate 보다 우선 사용 */
-
-    @Bean
-    @Primary
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(redisConnectionFactory);
-
-//        직렬화 설정
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-        template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
-
-        template.setEnableTransactionSupport(true); // 트랜잭션 지원
-        template.afterPropertiesSet(); // 설정 초기화
-        return template;
-    }
-
 }

@@ -37,7 +37,7 @@ public class OrderController {
     @PostMapping("/{userId}/orders")
     @Operation(summary = "주문 등록", description = "주문을 등록합니다.")
     public ResponseEntity<Integer> createOrder(@PathVariable Long userId, @RequestBody OrderListResDTO order) {
-//        TODO
+        orderService.createOrder(userId, order);
         return ResponseEntity.ok().body(SUCCESS_CODE);
     }
 
@@ -46,14 +46,14 @@ public class OrderController {
     public ResponseEntity<Integer> updateOrderById(@Parameter(description = "주문 아이디")
                                                    @PathVariable Long userId,
                                                    @PathVariable Long orderId) {
-//        TODO
+        orderService.updateOrder(userId, orderId);
         return ResponseEntity.ok().body(SUCCESS_CODE);
     }
 
     @DeleteMapping("/{userId}/orders/{orderId}")
     @Operation(summary = "주문 취소", description = "체결되지 않은 주문을 취소합니다.")
     public ResponseEntity<Integer> deleteOrderById(@PathVariable Long userId, @PathVariable("orderId") Long orderId) {
-//        TODO
+        orderService.deleteOrder(userId, orderId);
         return ResponseEntity.ok().body(SUCCESS_CODE);
     }
 }

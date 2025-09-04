@@ -8,6 +8,7 @@ import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 
 @Entity
@@ -26,7 +27,7 @@ public class OrderEntity {
     private int orderCount;
 
     @Column(name = "order_price", nullable = false)
-    private long orderPrice;
+    private BigDecimal orderPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_type", nullable = false)

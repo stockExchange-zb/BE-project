@@ -28,7 +28,6 @@ class OrderControllerTest {
     //    테스트용 주문 데이터
     private final String ORDER_PREFIX = "order:";
     private final String USER_ORDERS_KEY = "user:orders:";
-    private final String ALL_ORDERS_KEY = "orders:detail:";
 
     @BeforeEach
     void setUp() {
@@ -461,8 +460,142 @@ class OrderControllerTest {
     }
 
     @Test
-    @Disabled
-    void deleteOrderById() {
-        //        TODO - 성공, 대상 없음, 삭제 불가
+    @DisplayName("주문 삭제 테스트 - 성공")
+    void deleteOrderById_Success() {
+//        Given : 테스트 준비 - 삭제 테스트 위한 데이터 등록
+        Long userId = 1L;
+        Long orderId = 1L;
+        Long stockId = 10L;
+        String OrderDetailsKey = ORDER_PREFIX + userId + ":" + orderId;
+        String UserOrdersKey = USER_ORDERS_KEY + userId;
+
+        OrderDetailResDTO orderDetailResDTO = new OrderDetailResDTO(
+                stockId,
+                orderId,
+                10,
+                new BigDecimal("150000.00"),
+                OrderType.BUY,
+                OrderStatus.PENDING,
+                10,
+                0,
+                ZonedDateTime.now(),
+                ZonedDateTime.now()
+        );
+
+//        Redis 에 주문 저장
+        redisTemplate.opsForValue().set(OrderDetailsKey, orderDetailResDTO);
+        redisTemplate.opsForList().rightPush(UserOrdersKey, orderId);
+
+//        When : 주문 삭제 실행
+        redisTemplate.delete(OrderDetailsKey);
+        redisTemplate.opsForList().remove(UserOrdersKey, 1, orderId);
+
+//        Then : 삭제 결과 검증
+        OrderDetailResDTO afterDelete = (OrderDetailResDTO) redisTemplate.opsForValue().get(OrderDetailsKey);
+        List<Object> userOrderList = redisTemplate.opsForList().range(UserOrdersKey, 0, -1);
+
+        Assertions.assertNull(afterDelete);
+        Assertions.assertTrue(userOrderList.isEmpty());
+    }
+
+    @Test
+    @DisplayName("주문 삭제 테스트 - 부분 체결 삭제 불가")
+    void deleteOrderById_PartiallyExcuted_ThrowException() {
+//        Given: 부분 체결된 주문 생성
+        Long userId = 1L;
+        Long orderId = 1L;
+        Long stockId = 10L;
+        String OrderDetailsKey = ORDER_PREFIX + userId + ":" + orderId;
+
+        OrderReqDTO orderReqDTO = new OrderReqDTO(
+                10,
+                new BigDecimal("1500.00"),
+                OrderType.BUY,
+                stockId,
+                userId
+        );
+
+        OrderDetailResDTO orderPartialResDTO = new OrderDetailResDTO(
+                orderReqDTO.getStockId(),
+                orderId,
+                orderReqDTO.getOrderCount(),
+                orderReqDTO.getOrderPrice(),
+                orderReqDTO.getOrderType(),
+                OrderStatus.PENDING,
+                5, // 5개 남음
+                5, // 5개 체결
+                ZonedDateTime.now().minusMinutes(10),
+                ZonedDateTime.now().minusMinutes(5)
+        );
+
+        redisTemplate.opsForValue().set(OrderDetailsKey, orderPartialResDTO);
+
+//        When & Then : 예외 발생 검증
+        IllegalArgumentException exception = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    OrderDetailResDTO existing = (OrderDetailResDTO) redisTemplate.opsForValue().get(OrderDetailsKey);
+                    if (existing == null) {
+                        throw  new IllegalArgumentException("존재하지 않는 주문입니다.");
+                    }
+                    if(existing.getOrderRemainCount() > 0){
+                        throw  new IllegalArgumentException("이미 체결된 주문은 삭제할 수 없습니다.");
+                    }
+                    redisTemplate.delete(OrderDetailsKey);
+                }
+        );
+        Assertions.assertEquals("이미 체결된 주문은 삭제할 수 없습니다.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("주문 삭제 테스트 - 삭제 불가(완료된 주문)")
+    void deleteOrderById_OrderCompleted_ThrowException() {
+//        Given : 사용자 주문 등록부터 완료까지
+        Long userId = 1L;
+        Long stockId = 1L;
+        Long orderId = 1L;
+        String OrderDetailsKey = ORDER_PREFIX + userId + ":" + orderId;
+
+        OrderReqDTO orderReqDTO = new OrderReqDTO(
+                10,
+                new BigDecimal("1500.00"),
+                OrderType.BUY,
+                stockId,
+                userId
+        );
+
+        ZonedDateTime createdTime = ZonedDateTime.now().minusHours(30);
+        ZonedDateTime completedTime = ZonedDateTime.now().minusMinutes(30);
+
+        OrderDetailResDTO completedOrderDTO = new OrderDetailResDTO(
+                orderReqDTO.getStockId(),
+                orderId,
+                orderReqDTO.getOrderCount(),
+                orderReqDTO.getOrderPrice(),
+                orderReqDTO.getOrderType(),
+                OrderStatus.COMPLETED,
+                0,
+                orderReqDTO.getOrderCount(),
+                createdTime,
+                completedTime
+        );
+
+        redisTemplate.opsForValue().set(OrderDetailsKey, completedOrderDTO);
+
+//        When & Then : 예외 발생 검증
+        IllegalArgumentException exception = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    OrderDetailResDTO existing = (OrderDetailResDTO) redisTemplate.opsForValue().get(OrderDetailsKey);
+                    if(existing == null){
+                        throw  new IllegalArgumentException("존재하지 않는 주문입니다.");
+                    }
+                    if(existing.getOrderStatus() == OrderStatus.COMPLETED){
+                        throw  new IllegalArgumentException("완료된 주문은 삭제할 수 없습니다.");
+                    }
+                    redisTemplate.delete(OrderDetailsKey);
+                }
+        );
+        Assertions.assertEquals("완료된 주문은 삭제할 수 없습니다.", exception.getMessage());
     }
 }

@@ -31,7 +31,7 @@ public class OrderService {
     }
 
 //    주문 등록
-    public OrderReqDTO createOrder(Long userId, OrderListResDTO order) {
+    public OrderDetailResDTO createOrder(Long userId, OrderReqDTO order) {
         return null;
     }
 

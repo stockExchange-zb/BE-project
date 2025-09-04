@@ -2,10 +2,12 @@ package com.stockexchange.domain.order.controller;
 
 import com.stockexchange.domain.order.dto.OrderDetailResDTO;
 import com.stockexchange.domain.order.dto.OrderListResDTO;
+import com.stockexchange.domain.order.dto.OrderReqDTO;
 import com.stockexchange.domain.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +18,9 @@ import java.util.List;
 @RequestMapping("/api/v1/users")
 public class OrderController {
 
-    private static final int SUCCESS_CODE = 200;
+    private static final int SUCCESS_CREATE = 201;
+    private static final int SUCCESS_UPDATE = 200;
+    private static final int SUCCESS_DELETE = 204;
 
     private final OrderService orderService;
 
@@ -36,9 +40,10 @@ public class OrderController {
 
     @PostMapping("/{userId}/orders")
     @Operation(summary = "주문 등록", description = "주문을 등록합니다.")
-    public ResponseEntity<Integer> createOrder(@PathVariable Long userId, @RequestBody OrderListResDTO order) {
-        orderService.createOrder(userId, order);
-        return ResponseEntity.ok().body(SUCCESS_CODE);
+    public ResponseEntity<OrderDetailResDTO> createOrder(@PathVariable Long userId, @RequestBody OrderReqDTO order) {
+        OrderDetailResDTO createOrder = orderService.createOrder(userId, order);
+//        return ResponseEntity.ok().body(SUCCESS_CREATE);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createOrder);
     }
 
     @PutMapping("/{userId}/orders/{orderId}")
@@ -47,13 +52,13 @@ public class OrderController {
                                                    @PathVariable Long userId,
                                                    @PathVariable Long orderId) {
         orderService.updateOrder(userId, orderId);
-        return ResponseEntity.ok().body(SUCCESS_CODE);
+        return ResponseEntity.ok().body(SUCCESS_UPDATE);
     }
 
     @DeleteMapping("/{userId}/orders/{orderId}")
     @Operation(summary = "주문 취소", description = "체결되지 않은 주문을 취소합니다.")
     public ResponseEntity<Integer> deleteOrderById(@PathVariable Long userId, @PathVariable("orderId") Long orderId) {
         orderService.deleteOrder(userId, orderId);
-        return ResponseEntity.ok().body(SUCCESS_CODE);
+        return ResponseEntity.ok().body(SUCCESS_DELETE);
     }
 }

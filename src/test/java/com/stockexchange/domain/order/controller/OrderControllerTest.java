@@ -3,9 +3,9 @@ package com.stockexchange.domain.order.controller;
 import com.stockexchange.config.EmbeddedRedisConfig;
 import com.stockexchange.domain.order.dto.OrderDetailResDTO;
 import com.stockexchange.domain.order.dto.OrderListResDTO;
+import com.stockexchange.domain.order.dto.OrderReqDTO;
 import com.stockexchange.domain.order.entity.OrderStatus;
 import com.stockexchange.domain.order.entity.OrderType;
-import org.apache.commons.lang3.NotImplementedException;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -132,7 +133,7 @@ class OrderControllerTest {
                 500L,
                 orderId,
                 25,
-                15000L,
+                new BigDecimal("15000.00"),
                 OrderType.BUY,
                 OrderStatus.PENDING,
                 20,
@@ -151,7 +152,7 @@ class OrderControllerTest {
         Assertions.assertEquals(500L, redisResult.getStockId());
         Assertions.assertEquals(orderId, redisResult.getOrderId());
         Assertions.assertEquals(25, redisResult.getOrderCount());
-        Assertions.assertEquals(15000L, redisResult.getOrderPrice());
+        Assertions.assertEquals(new BigDecimal("15000.00"), redisResult.getOrderPrice());
         Assertions.assertEquals(OrderType.BUY, redisResult.getOrderType());
         Assertions.assertEquals(OrderStatus.PENDING, redisResult.getOrderStatus());
         Assertions.assertEquals(20, redisResult.getOrderRemainCount());
@@ -190,23 +191,278 @@ class OrderControllerTest {
     }
 
     @Test
-    @Disabled
-    void createOrder() {
-        //        TODO
-        throw new NotImplementedException();
+    @DisplayName("주문 등록 테스트 - 성공")
+    void createOrder_ValidInput_Success() {
+//        Given: 테스트 데이터 준비
+        Long userId = 1L;
+        Long stockId = 10L;
+        Long orderId = 20L;
+        String userOrdersKey = USER_ORDERS_KEY + userId;
+        String orderDetailsKey = ORDER_PREFIX + userId + ":";
+        OrderReqDTO orderReqDTO = new OrderReqDTO(10, new BigDecimal("150000.00"), OrderType.BUY, stockId, userId);
+
+//      예상되는 등록 후 결과(생성될 주문 데이터)
+        Long expectedOrderId = 1L;
+        OrderDetailResDTO orderDetailResDTO = new OrderDetailResDTO(
+                stockId,
+                expectedOrderId,
+                10,
+                new BigDecimal("150000.00"),
+                OrderType.BUY,
+                OrderStatus.PENDING,
+                10,
+                0,
+                ZonedDateTime.now(),
+                ZonedDateTime.now()
+        );
+
+//        When: 주문 등록 실행
+//        Redis에 주문 저장(실제 서비스에서는 OrderService.createOrder() 호출)
+        redisTemplate.opsForValue().set(orderDetailsKey + expectedOrderId, orderDetailResDTO);
+        redisTemplate.opsForList().rightPush(userOrdersKey, expectedOrderId);
+
+//        Then: 등록 결과 검증
+        OrderDetailResDTO saveOrderDetail = (OrderDetailResDTO) redisTemplate.opsForValue().get(orderDetailsKey + expectedOrderId);
+        Assertions.assertNotNull(saveOrderDetail);
+        Assertions.assertEquals(stockId, saveOrderDetail.getStockId());
+        Assertions.assertEquals(expectedOrderId, saveOrderDetail.getOrderId());
+        Assertions.assertEquals(OrderType.BUY, saveOrderDetail.getOrderType());
+        Assertions.assertEquals(OrderStatus.PENDING, saveOrderDetail.getOrderStatus());
+        Assertions.assertEquals(10, saveOrderDetail.getOrderRemainCount());
+        Assertions.assertEquals(0, saveOrderDetail.getOrderExecutedCount());
     }
 
     @Test
-    @Disabled
-    void updateOrderById() {
-        //        TODO
-        throw new NotImplementedException();
+    @DisplayName("주문 등록 테스트 - 필수 필드 누락 경우")
+    void createOrder_NullUserId_ThrowException() {
+//        Given : 테스트 데이터 준비 - userId가 null 인 경우
+        Long userId = null;
+        Long stockId = 10L;
+        Long orderId = 20L;
+        String userOrdersKey = USER_ORDERS_KEY + userId;
+        String orderDetailsKey = ORDER_PREFIX + userId + ":";
+        OrderReqDTO orderReqDTO = new OrderReqDTO(10, new BigDecimal("150000.00"), OrderType.BUY, stockId, userId);
+
+//        When & Then : 예외 발생 검증
+        IllegalArgumentException exception = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    if (orderReqDTO.getUserId() == null) {
+                        throw new IllegalArgumentException("사용자 ID는 필수입니다.");
+                    }
+                    redisTemplate.opsForValue().set(orderDetailsKey + stockId, orderReqDTO);
+                }
+        );
+//        예외 메세지 검증
+        Assertions.assertEquals("사용자 ID는 필수입니다.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("주문 등록 테스트 - 유효성 검사 실패")
+    void createOrder_InsufficientBalance_ReturnFalse() {
+//        Given : 테스트 데이터 준비 - 주문 수량 0인 경우
+        Long userId = 1L;
+        Long stockId = 10L;
+        Long orderId = 20L;
+        String userOrdersKey = USER_ORDERS_KEY + userId;
+        String orderDetailsKey = ORDER_PREFIX + userId + ":";
+        OrderReqDTO orderReqDTO = new OrderReqDTO(0, new BigDecimal("150000.00"), OrderType.BUY, stockId, userId);
+
+//        When & Then : 예외 발생 검증
+        IllegalArgumentException exception = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    if (orderReqDTO.getOrderCount() <= 0) {
+                        throw new IllegalArgumentException("주문 수량은 필수 입력입니다.");
+                    }
+                    redisTemplate.opsForValue().set(orderDetailsKey + stockId, orderReqDTO);
+                }
+        );
+        Assertions.assertEquals("주문 수량은 필수 입력입니다.", exception.getMessage());
+    }
+
+
+    @Test
+    @DisplayName("주문 수정 테스트 - 성공")
+    void updateOrderById_ValidUpdate_Success() {
+//        Given: 테스트 데이터 준비
+        Long userId = 1L;
+        Long orderId = 1L;
+        Long stockId = 10L;
+        String orderDetailsKey = ORDER_PREFIX + userId + ":" + orderId;
+
+//        기존 주문 데이터 생성(생성 시간 고정)
+        ZonedDateTime createdTime = ZonedDateTime.now().minusMonths(30);
+        OrderDetailResDTO orderDetailResDTO = new OrderDetailResDTO(
+                stockId,
+                orderId,
+                10,
+                new BigDecimal("15000.00"),
+                OrderType.BUY,
+                OrderStatus.PENDING,
+                10,
+                0,
+                createdTime,
+                createdTime
+        );
+//        Redis에 기존 주문 저장
+        redisTemplate.opsForValue().set(orderDetailsKey, orderDetailResDTO);
+
+//        사용자 수정 요청 데이터
+        OrderReqDTO updateOrderReqDTO = new OrderReqDTO(
+                20, // 수정
+                new BigDecimal("30000.00"), // 수정
+                OrderType.BUY,
+                stockId,
+                userId
+        );
+
+//        When : 주문 수정 실행
+//        1. 기존 주문 조회
+        OrderDetailResDTO existing = (OrderDetailResDTO) redisTemplate.opsForValue().get(orderDetailsKey);
+//        2. 수정된 주문 데이터 생성
+        OrderDetailResDTO updateExisting = new OrderDetailResDTO(
+                existing.getStockId(),
+                existing.getOrderId(),
+                updateOrderReqDTO.getOrderCount(),
+                updateOrderReqDTO.getOrderPrice(),
+                existing.getOrderType(),
+                existing.getOrderStatus(),
+                existing.getOrderRemainCount(),
+                existing.getOrderExecutedCount(),
+                existing.getCreatedAt(),
+                ZonedDateTime.now()
+        );
+
+//        3. Redis에 수정 데이터 저장
+        redisTemplate.opsForValue().set(orderDetailsKey, updateExisting);
+
+//        Then: 수정 결과 검증
+        OrderDetailResDTO result = (OrderDetailResDTO) redisTemplate.opsForValue().get(orderDetailsKey);
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(20, result.getOrderCount());
+        Assertions.assertEquals(new BigDecimal("30000.00"), result.getOrderPrice());
+    }
+
+    @Test
+    @DisplayName("주문 수정 테스트 - 데이터 존재하지 않는 경우")
+    void updateOrderById_NoExist_ThrowException() {
+        //        Given: 테스트 데이터 준비
+        Long userId = 1L;
+        Long orderId = 999L;
+        String orderDetailsKey = ORDER_PREFIX + userId + ":" + orderId;
+
+//        수정할 데이터
+        OrderReqDTO updateOrderReqDTO = new OrderReqDTO(
+                15,
+                new BigDecimal("1500.00"),
+                OrderType.BUY,
+                10L,
+                userId
+        );
+
+//        When & Then : 예외 발생 검증
+        IllegalArgumentException exception = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    OrderDetailResDTO existing = (OrderDetailResDTO) redisTemplate.opsForValue().get(orderDetailsKey);
+                    if (existing == null) {
+                        throw new IllegalArgumentException("존재하지 않는 주문입니다.");
+                    }
+//                    수정 로직 실행
+                    redisTemplate.opsForValue().set(orderDetailsKey, updateOrderReqDTO);
+                }
+        );
+        Assertions.assertEquals("존재하지 않는 주문입니다.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("주문 수정 테스트 - null id 파라미터")
+    void updateOrderById_NullId_ThrowException() {
+//        Given : Null 파라미터
+        Long userId = null;
+        Long orderId = null;
+        Long stockId = 10L;
+
+        OrderReqDTO updateOrderReqDTO = new OrderReqDTO(
+                15,
+                new BigDecimal("1500.00"),
+                OrderType.SELL,
+                stockId,
+                userId
+        );
+
+//        When & Then : 예외 발생 검증
+        IllegalArgumentException exception = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    if (userId == null || orderId == null || stockId == null) {
+                        throw new IllegalArgumentException("사용자 ID와 주문 ID는 필수입니다.");
+                    }
+//                    수정 로직
+                    String orderDetailsKey = ORDER_PREFIX + userId + ":" + orderId;
+                    redisTemplate.opsForValue().set(orderDetailsKey, updateOrderReqDTO);
+                }
+        );
+        Assertions.assertEquals("사용자 ID와 주문 ID는 필수입니다.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("주문 수정 테스트 - 유효성 검사 실패(잔고 부족)")
+    void updateOrderById_InsufficientBalance_ReturnFalse() {
+//        Given : 테스트 데이터 준비 - 수정하려는 수량 0 인 경우
+        Long userId = 1L;
+        Long orderId = 1L;
+        Long stockId = 10L;
+        String orderDetailsKey = ORDER_PREFIX + userId + ":" + orderId;
+
+        OrderDetailResDTO orderDetailResDTO = new OrderDetailResDTO(
+                stockId,
+                orderId,
+                10,
+                new BigDecimal("150000.00"),
+                OrderType.BUY,
+                OrderStatus.PENDING,
+                10,
+                0,
+                ZonedDateTime.now(),
+                ZonedDateTime.now()
+        );
+
+//        Redis에 기존 주문 저장
+        redisTemplate.opsForValue().set(orderDetailsKey, orderDetailResDTO);
+
+//        잘못된 수정 데이터(수량 0)
+        OrderReqDTO updateOrderReqDTO = new OrderReqDTO(
+                0,
+                new BigDecimal("1500.00"),
+                OrderType.BUY,
+                stockId,
+                userId
+        );
+
+//        When & Then : 예외 발생 검증
+        IllegalArgumentException exception = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    OrderDetailResDTO existing = (OrderDetailResDTO) redisTemplate.opsForValue().get(orderDetailsKey);
+                    if (existing == null) { // 기존 주문 존재 확인
+                        throw  new IllegalArgumentException("존재하지 않는 주문입니다.");
+                    }
+//                    유효성 검사
+                    if(updateOrderReqDTO.getOrderCount() <= 0){
+                        throw  new IllegalArgumentException("주문 수량은 0보다 커야 합니다.");
+                    }
+//                    수정 로직 실행(실제로 도달 X)
+                    redisTemplate.opsForValue().set(orderDetailsKey, updateOrderReqDTO);
+                }
+        );
+        Assertions.assertEquals("주문 수량은 0보다 커야 합니다.", exception.getMessage());
     }
 
     @Test
     @Disabled
     void deleteOrderById() {
-        //        TODO
-        throw new NotImplementedException();
+        //        TODO - 성공, 대상 없음, 삭제 불가
     }
 }

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Entity
 @Getter
 @NoArgsConstructor
@@ -26,5 +28,13 @@ public class StockEntity {
     private StockIpo stockIpo;
 
     @Column(name = "stock_price", nullable = false)
-    private long stockPrice;
+    private BigDecimal stockPrice;
+
+//    테스트 위한 생성자
+    public StockEntity(String stockName, String stockNumber, StockIpo stockIpo, BigDecimal stockPrice) {
+        this.stockName = stockName;
+        this.stockNumber = stockNumber;
+        this.stockIpo = stockIpo;
+        this.stockPrice = stockPrice;
+    }
 }

@@ -57,4 +57,18 @@ public class OrderEntity {
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
+
+//    OrderRepositoryTest 위한 생성자
+    public OrderEntity(int orderCount, BigDecimal orderPrice, OrderType orderType, OrderStatus orderStatus, int orderRemainCount, int orderExecutedCount, ZonedDateTime createdAt, ZonedDateTime updatedAt, StockEntity stock, Long userId) {
+        this.orderCount = orderCount;
+        this.orderPrice = orderPrice;
+        this.orderType = orderType;
+        this.orderStatus = orderStatus;
+        this.orderRemainCount = orderRemainCount;
+        this.orderExecutedCount = orderExecutedCount;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.stock = stock;
+        this.userId = userId;
+    }
 }

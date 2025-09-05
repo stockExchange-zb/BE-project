@@ -42,6 +42,9 @@ dependencies {
         // embedded redis - slf4j-simple 제외하여 로깅 충돌 방지
     }
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+//    H2 데이터베이스 - repository 테스트
+    testImplementation 'com.h2database:h2'
 }
 
 tasks.named('test') {

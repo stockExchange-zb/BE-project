@@ -7,10 +7,10 @@ DROP TABLE IF EXISTS holding;
 DROP TABLE IF EXISTS execution;
 DROP TABLE IF EXISTS order_table;
 DROP TABLE IF EXISTS stock;
-DROP TABLE IF EXISTS user;
+DROP TABLE IF EXISTS users;
 
 -- 회원 테이블
-CREATE TABLE IF NOT EXISTS user (
+CREATE TABLE IF NOT EXISTS users (
     user_id bigint NOT NULL AUTO_INCREMENT COMMENT '회원 아이디',
     user_name varchar(20) NOT NULL COMMENT '회원명',
     user_krw_price decimal(20, 2) NOT NULL COMMENT '보유 원화 현금',
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS order_table (
     user_id bigint NOT NULL COMMENT '회원 아이디',
     PRIMARY KEY (order_id),
     FOREIGN KEY (stock_id) REFERENCES stock(stock_id),
-    FOREIGN KEY (user_id) REFERENCES user(user_id)
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
 ) ENGINE=INNODB COMMENT='주문';
 
 
@@ -71,6 +71,6 @@ CREATE TABLE IF NOT EXISTS holding (
     user_id bigint NOT NULL COMMENT '회원 아이디',
     stock_id bigint NOT NULL COMMENT '주식 아이디',
     PRIMARY KEY (holding_id),
-    FOREIGN KEY (user_id) REFERENCES user(user_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (stock_id) REFERENCES stock(stock_id)
 ) ENGINE=INNODB COMMENT='보유 주식';

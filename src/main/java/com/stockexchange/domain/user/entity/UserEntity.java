@@ -10,7 +10,7 @@ import java.time.ZonedDateTime;
 @Entity
 @Getter
 @NoArgsConstructor
-@Table(name = "user")
+@Table(name = "users")
 public class UserEntity {
 
     @Id

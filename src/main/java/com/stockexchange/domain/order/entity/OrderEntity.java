@@ -2,6 +2,7 @@ package com.stockexchange.domain.order.entity;
 
 import com.stockexchange.domain.stock.entity.StockEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -23,6 +24,7 @@ public class OrderEntity {
     @Column(name = "order_id")
     private Long orderId;
 
+    @Min(value = 1, message = "주문 수량은 1 이상 필수입니다.")
     @Column(name = "order_count", nullable = false)
     private int orderCount;
 
@@ -58,7 +60,7 @@ public class OrderEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-//    OrderRepositoryTest 위한 생성자
+    //    OrderRepositoryTest 위한 생성자
     public OrderEntity(int orderCount, BigDecimal orderPrice, OrderType orderType, OrderStatus orderStatus, int orderRemainCount, int orderExecutedCount, ZonedDateTime createdAt, ZonedDateTime updatedAt, StockEntity stock, Long userId) {
         this.orderCount = orderCount;
         this.orderPrice = orderPrice;
@@ -70,5 +72,20 @@ public class OrderEntity {
         this.updatedAt = updatedAt;
         this.stock = stock;
         this.userId = userId;
+    }
+
+    public static OrderEntity createOrder(int orderCount, BigDecimal orderPrice, OrderType orderType, StockEntity stockId, Long userId) {
+        OrderEntity order = new OrderEntity();
+        order.orderCount = orderCount;
+        order.orderPrice = orderPrice;
+        order.orderType = orderType;
+        order.orderStatus = OrderStatus.PENDING;
+        order.orderRemainCount = orderCount;
+        order.orderExecutedCount = 0;
+        order.createdAt = ZonedDateTime.now();
+        order.updatedAt = ZonedDateTime.now();
+        order.stock = stockId;
+        order.userId = userId;
+        return order;
     }
 }

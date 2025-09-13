@@ -88,4 +88,11 @@ public class OrderEntity {
         order.userId = userId;
         return order;
     }
+
+    public void updateOrder(int orderCount, BigDecimal orderPrice){
+        this.orderCount = orderCount;
+        this.orderPrice = orderPrice;
+        this.orderRemainCount = orderCount; // 수정 시 남은 수량도 새로운 수량으로 재설정
+        this.updatedAt = ZonedDateTime.now(); // 수정 시간 업데이트
+    }
 }

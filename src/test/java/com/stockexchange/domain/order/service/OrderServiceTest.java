@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -27,6 +26,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -88,10 +88,10 @@ class OrderServiceTest {
     @DisplayName("주문 조회 - 특정 주문 조회 성공")
     void getOrderDetail_Success() {
 //        Given: Mock Repository 동작 정의
-        when(orderRepository.findByOrderIdAndUserId(orderId, userId)).thenReturn(mockOrderDetailResDTO);
+        when(orderRepository.findByOrderIdAndUserId(userId, orderId)).thenReturn(mockOrderDetailResDTO);
 
 //        When: 실제 서비스 메서드 호출
-        OrderDetailResDTO result = orderService.getOrderDetail(orderId, userId);
+        OrderDetailResDTO result = orderService.getOrderDetail(userId, orderId);
 
 //        Then: 결과 검증
         Assertions.assertNotNull(result);
@@ -102,10 +102,10 @@ class OrderServiceTest {
     @DisplayName("주문 조회 - 주문이 없는 경우")
     void getOrder_NotExist_Fail() {
 //        Given: Repository가 null 반환하도록 설정
-        when(orderRepository.findByOrderIdAndUserId(orderId, userId)).thenReturn(null);
+        when(orderRepository.findByOrderIdAndUserId(userId, orderId)).thenReturn(null);
 
 //        When: 실제 서비스 메서드 호출
-        OrderDetailResDTO result = orderService.getOrderDetail(orderId, userId);
+        OrderDetailResDTO result = orderService.getOrderDetail(userId, orderId);
 
 //        Then: null 반환 검증
         Assertions.assertNull(result);
@@ -115,13 +115,21 @@ class OrderServiceTest {
     @DisplayName("주문 등록 - 성공")
     void createOrder_Success() {
 //        Given: 테스트 입력 데이터와 Mock 동작 정의
-        StockEntity mockStockEntity = Mockito.mock(StockEntity.class);
-        OrderEntity mockSavedOrder = Mockito.mock(OrderEntity.class);
+//        빈 가짜 객체를 생성해서 모든 메서드 호출 시 기본값(null, 0. false) 반환
+        StockEntity mockStockEntity = mock(StockEntity.class);
+        OrderEntity mockOrderEntity = mock(OrderEntity.class);
 //        Mock 동작 정의
+//        Service 실행 중 savedOrder.getOrderId() 호출 시점에 1L 반환 - 안할 시 null 반환
+        when(mockOrderEntity.getOrderId()).thenReturn(1L);
+
+//        Repository Mock 동작 정의
+//        Service 실행 중 stockRepository.findById() 호출 시점에 mockStockEntity 반환 - 안할 시 null 반환
+        /* 각 when()은 Service 실행 중 특정 시점의 메서드 호출에 대한 가짜 응답
+         * Service 로직이 중단되지 않고 끝까지 실행되도록 하는 환경 설정
+         * 실제 DB나 복잡한 객체 생성 없이 Service 로직만 테스트 */
         when(stockRepository.findById(10L)).thenReturn(Optional.of(mockStockEntity));
-        when(mockSavedOrder.getOrderId()).thenReturn(1L);
-        when(orderRepository.save(any(OrderEntity.class))).thenReturn(mockSavedOrder); // save 메서드 호출 시 mockSavedOrder 객체 반환
-        when(orderRepository.findByOrderIdAndUserId(orderId, userId)).thenReturn(mockOrderDetailResDTO); // orderId, userId 호출 시 mockOrderDetailResDTO 반환
+        when(orderRepository.save(any(OrderEntity.class))).thenReturn(mockOrderEntity); // save 메서드 호출 시 mockSavedOrder 객체 반환
+        when(orderRepository.findByOrderIdAndUserId(userId, 1L)).thenReturn(mockOrderDetailResDTO); // orderId, userId 호출 시 mockOrderDetailResDTO 반환
 
 //        When: 실제 서비스 메서드 호출
         OrderDetailResDTO result = orderService.createOrder(userId, mockOrderReqDTO);
@@ -148,12 +156,14 @@ class OrderServiceTest {
 
 //        When & Then : NoSuchElementException 예상
         Assertions.assertThrows(NoSuchElementException.class,
-                ()->{orderService.createOrder(userId, mockOrderReqDTO);});
+                () -> {
+                    orderService.createOrder(userId, mockOrderReqDTO);
+                });
     }
 
     @Test
     @DisplayName("주문 등록 테스트 - 주문 수량 0인 경우")
-    void createOrder_insufficient_False(){
+    void createOrder_insufficient_False() {
 //        Given : 주문 수량 0인 데이터 생성
         OrderReqDTO mockOrderReqDTO = new OrderReqDTO(
                 0,
@@ -163,18 +173,20 @@ class OrderServiceTest {
                 userId
         );
 
-        StockEntity mockStockEntity = Mockito.mock(StockEntity.class);
+        StockEntity mockStockEntity = mock(StockEntity.class);
 //        when(stockRepository.findById(10L)).thenReturn(Optional.of(mockStockEntity));
 //        수량검증을 이미 수행, OrderService > stockRepository 호출 X
 
 //        When & Then : 유효성 검증 예외 발생
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> {orderService.createOrder(userId, mockOrderReqDTO);});
+                () -> {
+                    orderService.createOrder(userId, mockOrderReqDTO);
+                });
     }
 
     @Test
     @DisplayName("주문 등록 테스트 - 음수 가격 주문")
-    void createOrder_NegativePrice_False(){
+    void createOrder_NegativePrice_False() {
         OrderReqDTO mockOrderReqDTO = new OrderReqDTO(
                 0,
                 new BigDecimal("-1500.00"),
@@ -183,16 +195,174 @@ class OrderServiceTest {
                 userId
         );
 
-        StockEntity mockStockEntity = Mockito.mock(StockEntity.class);
+        StockEntity mockStockEntity = mock(StockEntity.class);
 //        when(stockRepository.findById(10L)).thenReturn(Optional.of(mockStockEntity));
 
 //        When & Then
         Assertions.assertThrows(IllegalArgumentException.class,
-                ()->{orderService.createOrder(userId, mockOrderReqDTO);});
+                () -> {
+                    orderService.createOrder(userId, mockOrderReqDTO);
+                });
     }
 
     @Test
-    void updateOrder() {
+    @DisplayName("주문 수정 테스트 - 성공")
+    void updateOrder_Success() {
+//        Given: 테스트 데이터 준비
+//        1. 수정 전
+        OrderReqDTO mockOrderReqDTO = new OrderReqDTO(
+                20, // 기존 10 -> 20 으로 수정
+                new BigDecimal("2000.00"), // 기존 1500 -> 2000 원으로 수정
+                OrderType.BUY,
+                10L,
+                userId
+        );
+
+//        2. DB에서 조회된 기존 주문 entity(mock)
+        OrderEntity mockOrderEntity = mock(OrderEntity.class);
+
+//        3. Mock 동작 정의 => 기존 주문의 상태 설정(수정 가능 상태)
+        when(mockOrderEntity.getUserId()).thenReturn(userId);
+        when(mockOrderEntity.getOrderStatus()).thenReturn(OrderStatus.PENDING);
+        when(mockOrderEntity.getOrderExecutedCount()).thenReturn(0);
+        when(mockOrderEntity.getOrderId()).thenReturn(orderId);
+
+//        4. 수정 후 반환될 DTO(기대결과)
+        OrderDetailResDTO expectResult = new OrderDetailResDTO(
+                10L, 1L, 20, new BigDecimal("2000.00"),
+                OrderType.BUY, OrderStatus.PENDING, 20, 0,
+                ZonedDateTime.now(), ZonedDateTime.now()
+        );
+
+//        5. Repository Mock 동작 정의
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrderEntity));
+        // "주문ID 로 주문을 찾았다"는 시나리오 가정
+        when(orderRepository.findByOrderIdAndUserId(orderId, userId)).thenReturn(expectResult);
+        // "수정 완료 후 최종 조회 결과"를 가정
+
+//        When: 데이터 수정
+        OrderDetailResDTO result = orderService.updateOrder(userId, orderId, mockOrderReqDTO);
+
+//        Then: 결과 검증
+        Assertions.assertEquals(20, result.getOrderCount());
+        Assertions.assertEquals(new BigDecimal("2000.00"), result.getOrderPrice());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 주문 - 예외 발생")
+    void updateOrder_OrderNotFound_ThrowsException() {
+//        Given
+        OrderReqDTO mockOrderReqDTO = new OrderReqDTO(20, new BigDecimal("1500.00"), OrderType.BUY, 10L, userId);
+        when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
+
+//        When & Then
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class,
+                () -> {
+                    orderService.updateOrder(userId, orderId, mockOrderReqDTO);
+                });
+        Assertions.assertEquals("수정할 주문을 찾을 수 없습니다.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("다른 사용자의 주문 수정 시도 - 예외 발생")
+    void updateOrder_UnauthorizedUser_ThrowsException() {
+//        Given
+        OrderReqDTO mockOrderReqDTO = new OrderReqDTO(20, new BigDecimal("1500.00"), OrderType.BUY, 10L, 90L);
+
+        OrderEntity mockOrderEntity = mock(OrderEntity.class);
+        when(mockOrderEntity.getUserId()).thenReturn(userId);
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrderEntity));
+
+//        When & Then
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class,
+                () -> {
+                    orderService.updateOrder(90L, orderId, mockOrderReqDTO);
+                });
+        Assertions.assertEquals("수정 권한이 없습니다.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("PENDING 상태가 아닌 주문 수정 시도 - 예외 발생")
+    void updateOrder_NotPendingStatus_ThrowsException() {
+//        Given
+        OrderReqDTO mockOrderReqDTO = new OrderReqDTO(20, new BigDecimal("1500.00"), OrderType.BUY, 10L, userId);
+
+        OrderEntity mockOrderEntity = mock(OrderEntity.class);
+        when(mockOrderEntity.getUserId()).thenReturn(userId);
+        when(mockOrderEntity.getOrderStatus()).thenReturn(OrderStatus.COMPLETED); // PENDING 이 아님
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrderEntity));
+
+//        When & Then
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class,
+                () -> {
+                    orderService.updateOrder(userId, orderId, mockOrderReqDTO);
+                });
+
+        Assertions.assertEquals("주문 상태는 PENDING만 수정 가능합니다.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("이미 체결된 주문 수정 시도 - 예외 발생")
+    void updateOrder_AlreadyExecuted_ThrowsException() {
+//        Given
+        OrderReqDTO mockOrderReqDTO = new OrderReqDTO(20, new BigDecimal("1500.00"), OrderType.BUY, 10L, userId);
+
+        OrderEntity mockOrderEntity = mock(OrderEntity.class);
+        when(mockOrderEntity.getUserId()).thenReturn(userId);
+        when(mockOrderEntity.getOrderStatus()).thenReturn(OrderStatus.PENDING);
+        when(mockOrderEntity.getOrderExecutedCount()).thenReturn(1);
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrderEntity));
+
+//        When & Then
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class,
+                () -> {
+                    orderService.updateOrder(userId, orderId, mockOrderReqDTO);
+                });
+
+        Assertions.assertEquals("이미 체결된 주문은 수정할 수 없습니다.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("주문 수량이 0 이하 - 예외 발생")
+    void updateOrder_InvalidCount_ThrowsException() {
+//        Given
+        OrderReqDTO mockOrderReqDTO = new OrderReqDTO(0, new BigDecimal("1500.00"), OrderType.BUY, 10L, userId);
+
+        OrderEntity mockOrderEntity = mock(OrderEntity.class);
+        when(mockOrderEntity.getUserId()).thenReturn(userId);
+        when(mockOrderEntity.getOrderStatus()).thenReturn(OrderStatus.PENDING);
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrderEntity));
+
+//        When & Then
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class,
+                () -> {
+                    orderService.updateOrder(userId, orderId, mockOrderReqDTO);
+                });
+        Assertions.assertEquals("주문 수량은 1 이상 필수 입니다.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("주문 가격이 0 이하 - 예외 발생")
+    void updateOrder_InvalidPrice_ThrowsException() {
+//        Given
+        OrderReqDTO mockOrderReqDTO = new OrderReqDTO(10, new BigDecimal("0"), OrderType.BUY, 10L, userId);
+
+        OrderEntity mockOrderEntity = mock(OrderEntity.class);
+        when(mockOrderEntity.getUserId()).thenReturn(userId);
+        when(mockOrderEntity.getOrderStatus()).thenReturn(OrderStatus.PENDING);
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrderEntity));
+
+//        When & Then
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class,
+                () -> {
+                    orderService.updateOrder(userId, orderId, mockOrderReqDTO);
+                });
+        Assertions.assertEquals("주문 가격은 0보다 커야 합니다.", exception.getMessage());
     }
 
     @Test

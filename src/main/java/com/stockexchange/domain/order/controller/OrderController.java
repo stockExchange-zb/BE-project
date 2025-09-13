@@ -6,6 +6,7 @@ import com.stockexchange.domain.order.dto.OrderReqDTO;
 import com.stockexchange.domain.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,11 +49,12 @@ public class OrderController {
 
     @PutMapping("/{userId}/orders/{orderId}")
     @Operation(summary = "주문 수정", description = "체결되지 않은 주문을 수정합니다.")
-    public ResponseEntity<Integer> updateOrderById(@Parameter(description = "주문 아이디")
-                                                   @PathVariable Long userId,
-                                                   @PathVariable Long orderId) {
-        orderService.updateOrder(userId, orderId);
-        return ResponseEntity.ok().body(SUCCESS_UPDATE);
+    public ResponseEntity<OrderDetailResDTO> updateOrderById(
+            @Parameter(description = "사용자 아이디") @PathVariable Long userId,
+            @Parameter(description = "주문 아이디") @PathVariable Long orderId,
+            @Parameter(description = "수정할 주문 정보") @RequestBody @Valid OrderReqDTO orderReqDTO) {
+        OrderDetailResDTO updateOrder = orderService.updateOrder(userId, orderId, orderReqDTO);
+        return ResponseEntity.ok(updateOrder);
     }
 
     @DeleteMapping("/{userId}/orders/{orderId}")

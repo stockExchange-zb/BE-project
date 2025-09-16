@@ -392,9 +392,10 @@ components:
           example: "KOSPI"
           description: 상장시장
         stockPrice:
-          type: integer
+          type: number
+          format: decimal
           description: 종목 가격(원)
-          example: 75000
+          example: 75000.00
       required:
         - stockId
         - stockName
@@ -409,9 +410,10 @@ components:
           description: 주문 수량
           example: 10
         orderPrice:
-          type: integer
+          type: number
+          format: decimal
           description: 주문 가격
-          example: 75000
+          example: 75000.00
         orderType:
           type: string
           enum: [ "BUY", "SELL" ]
@@ -485,9 +487,10 @@ components:
           example: 20
           description: 주문 수량
         orderPrice:
-          type: integer
-          example: 75000
-          description: 주문 가격
+          type: number
+          format: decimal
+          example: 75000.00
+          description: 주문 가격(원)
         orderType:
           type: string
           example: "SELL"
@@ -536,9 +539,10 @@ components:
           description: 수정할 주문 수량
           example: 100
         orderPrice:
-          type: integer
-          description: 수정할 주문 가격
-          example: 65000
+          type: number
+          format: decimal
+          description: 수정할 주문 가격(원)
+          example: 65000.00
     HoldingResDTO: # 보유 주식 조회 DTO
       type: object
       properties:
@@ -564,13 +568,15 @@ components:
           description: 보유 수량
           example: 50
         holdingTotalPrice:
-          type: integer
-          description: 총 손익
-          example: 1000000
+          type: number
+          format: decimal
+          description: 총 손익(원)
+          example: 1000000.00
         currentStockPrice:
-          type: integer
-          description: 현재 주가
-          example: 71800
+          type: number
+          format: decimal
+          description: 현재 주가(원)
+          example: 71800.00
         updatedAt:
           type: string
           format: date-time
@@ -605,9 +611,10 @@ components:
           description: 체결 수량
           example: 10
         executionPrice:
-          type: integer
-          description: 체결 가격
-          example: 700000
+          type: number
+          format: decimal
+          description: 체결 가격(원)
+          example: 700000.00
         executionBuyOrderId:
           type: integer
           format: int64
@@ -645,10 +652,11 @@ components:
           description: 회원명
           example: "가나다"
         userKrwPrice:
-          type: integer
-          format: int64
+          type: number
+          format: decimal
           description: 보유 원화 현금
-          example: 100000
+          example: 100000.00
+          minimum: 0.00
         createdAt:
           type: string
           description: 가입 시간

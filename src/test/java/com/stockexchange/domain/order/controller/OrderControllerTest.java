@@ -1,26 +1,60 @@
 package com.stockexchange.domain.order.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stockexchange.config.EmbeddedRedisConfig;
 import com.stockexchange.domain.order.dto.OrderDetailResDTO;
 import com.stockexchange.domain.order.dto.OrderListResDTO;
 import com.stockexchange.domain.order.dto.OrderReqDTO;
 import com.stockexchange.domain.order.entity.OrderStatus;
 import com.stockexchange.domain.order.entity.OrderType;
+import com.stockexchange.domain.order.service.OrderService;
 import org.junit.jupiter.api.*;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-@SpringBootTest
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(controllers = OrderController.class)
 @Import(EmbeddedRedisConfig.class)
 class OrderControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    /*@MockBean - springboot 3.4 부터 deprecated
+    private OrderService orderService;*/
+
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        @Primary
+        public OrderService orderService() {
+            return Mockito.mock(OrderService.class);
+        }
+    }
+
+    @Autowired
+    private OrderService orderService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
@@ -278,5 +312,39 @@ class OrderControllerTest {
                 }
         );
         Assertions.assertEquals("주문 수량은 필수 입력입니다.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("주문 수정 성공")
+    void updateOrder_Success() throws Exception {
+//        Given
+        Long userId = 1L;
+        Long stockId = 10L;
+        Long orderId = 20L;
+        OrderReqDTO orderReqDTO = new OrderReqDTO(
+                10,
+                new BigDecimal("1500.00"),
+                OrderType.BUY,
+                10L,
+                userId
+        );
+
+        OrderDetailResDTO orderDetailResDTO = new OrderDetailResDTO(
+                10L, 1L, 10, new BigDecimal("15000.00"),
+                OrderType.BUY, OrderStatus.PENDING, 10, 0,
+                ZonedDateTime.now(), ZonedDateTime.now()
+        );
+
+//        Mock 설정
+        when(orderService.updateOrder(userId, orderId, any(OrderReqDTO.class))).thenReturn(orderDetailResDTO);
+
+//        When & Then - HTTP 요청 실행
+        mockMvc.perform(put("/api/v1/users/{userId}/orders/{orderId}", userId, orderId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(orderReqDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.orderId").value(orderId))
+                .andExpect(jsonPath("$.orderCount").value(10))
+                .andExpect(jsonPath("$.orderPrice").value(new BigDecimal("3000.00")));
     }
 }

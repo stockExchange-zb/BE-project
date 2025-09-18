@@ -41,9 +41,9 @@ public class OrderController {
 
     @PostMapping("/{userId}/orders")
     @Operation(summary = "주문 등록", description = "주문을 등록합니다.")
-    public ResponseEntity<OrderDetailResDTO> createOrder(@PathVariable Long userId, @RequestBody OrderReqDTO order) {
+    public ResponseEntity<OrderDetailResDTO> createOrder(@PathVariable Long userId, @Valid @RequestBody OrderReqDTO order) {
         OrderDetailResDTO createOrder = orderService.createOrder(userId, order);
-//        return ResponseEntity.ok().body(SUCCESS_CREATE);
+//        return ResponseEntity.status(HttpStatus.CREATED).body(createOrder); // 201 Created 반환
         return ResponseEntity.ok().body(createOrder);
     }
 
@@ -62,5 +62,6 @@ public class OrderController {
     public ResponseEntity<Integer> deleteOrderById(@PathVariable Long userId, @PathVariable("orderId") Long orderId) {
         orderService.deleteOrder(userId, orderId);
         return ResponseEntity.ok().body(SUCCESS_DELETE);
+//        return ResponseEntity.status(HttpStatus.NO_CONTENT).build(); // 204 No Content 반환
     }
 }

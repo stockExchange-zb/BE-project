@@ -44,7 +44,7 @@ public class OrderController {
     public ResponseEntity<OrderDetailResDTO> createOrder(@PathVariable Long userId, @RequestBody OrderReqDTO order) {
         OrderDetailResDTO createOrder = orderService.createOrder(userId, order);
 //        return ResponseEntity.ok().body(SUCCESS_CREATE);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createOrder);
+        return ResponseEntity.ok().body(createOrder);
     }
 
     @PutMapping("/{userId}/orders/{orderId}")

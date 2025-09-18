@@ -5,17 +5,17 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 @Entity
 @Getter
 @NoArgsConstructor
-@ToString(exclude = {"stock"})
 @Table(name = "order_table")
 public class OrderEntity {
 
@@ -74,7 +74,14 @@ public class OrderEntity {
         this.userId = userId;
     }
 
+    //    Rich Entity : 자신을 생성하는 비즈니스 규칙 포함
     public static OrderEntity createOrder(int orderCount, BigDecimal orderPrice, OrderType orderType, StockEntity stockId, Long userId) {
+
+//        비즈니스 규칙 검증 - Entity에서
+        validateStock(stockId); // 종목 거래 가능한지 확인
+        validateTradingHours(); // 거래 가능한 시간인지 확인
+        validateUserId(userId); // 회원인지 확인
+
         OrderEntity order = new OrderEntity();
         order.orderCount = orderCount;
         order.orderPrice = orderPrice;
@@ -89,10 +96,61 @@ public class OrderEntity {
         return order;
     }
 
-    public void updateOrder(int orderCount, BigDecimal orderPrice){
+    //    Rich Entity : 자신의 상태 변경 규칙 포함
+    public void updateOrder(int orderCount, BigDecimal orderPrice) {
+//        수정 가능 여부 검증
+        validateCanModify(); // PENDING 상태이고, 체결되지 않았는지
+
         this.orderCount = orderCount;
         this.orderPrice = orderPrice;
         this.orderRemainCount = orderCount; // 수정 시 남은 수량도 새로운 수량으로 재설정
         this.updatedAt = ZonedDateTime.now(); // 수정 시간 업데이트
+    }
+
+    //    비즈니스 규칙 검증 메서드==================================================
+
+//    수정 가능 여부 검증 로직
+    private void validateCanModify() {
+        if (this.orderStatus != OrderStatus.PENDING) {
+            throw new IllegalArgumentException("PENDING 상태의 주문만 수정할 수 있습니다. 현재 상태: " + this.orderStatus);
+        }
+        if (this.orderExecutedCount > 0) {
+            throw new IllegalArgumentException("이미 " + this.orderExecutedCount + "개가 체결되어 주문은 수정할 수 없습니다.");
+        }
+    }
+
+//    회원 확인 로직
+    private static void validateUserId(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("회원만 거래할 수 있습니다.");
+        }
+    }
+
+//    거래 가능 시간 확인 로직
+    private static void validateTradingHours() {
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+        LocalTime currentTime = now.toLocalTime();
+
+        LocalTime tradingStart = LocalTime.of(9, 0);
+        LocalTime tradingEnd = LocalTime.of(15, 20);
+
+        if (currentTime.isBefore(tradingStart) || currentTime.isAfter(tradingEnd)) {
+            throw new IllegalArgumentException("현재 거래 가능 시간이 아닙니다. 거래 시간: 09:00 ~ 15:20");
+        }
+    }
+
+//    종목 확인 로직
+    private static void validateStock(StockEntity stock) {
+        if (stock == null) {
+            throw new IllegalArgumentException("종목 정보는 필수입니다.");
+        }
+
+    }
+
+//    소유자 검증 로직
+    public void validateOwnership(Long requestUserId) {
+        if(this.userId.equals(requestUserId)) {
+            throw new IllegalArgumentException("주문 수정/취소 권한이 없습니다.");
+        }
     }
 }

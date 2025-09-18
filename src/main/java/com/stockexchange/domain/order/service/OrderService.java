@@ -39,19 +39,12 @@ public class OrderService {
     //    주문 등록
     @Transactional
     public OrderDetailResDTO createOrder(Long userId, OrderReqDTO orderReqDTO) {
-//        유효성 검증
-        if (orderReqDTO.getOrderCount() <= 0) {
-            throw new IllegalArgumentException("주문 수량은 1 이상 필수입니다.");
-        }
-
-        if (orderReqDTO.getOrderPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("주문 가격은 0보다 커야합니다.");
-        }
-
 //                Stock 조회
+//        1. 필요한 데이터 조회(흐름 제어)
         StockEntity stock = stockRepository.findById(orderReqDTO.getStockId())
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 종목입니다. : " + orderReqDTO.getStockId()));
 
+//        2. Entity 에게 자신의 생성을 위임(Entity가 비즈니스 규칙 처리)
         OrderEntity order = OrderEntity.createOrder(
                 orderReqDTO.getOrderCount(),
                 orderReqDTO.getOrderPrice(),
@@ -60,8 +53,10 @@ public class OrderService {
                 userId
         );
 
+//        3. 저장(흐름 제어)
         OrderEntity savedOrder = orderRepository.save(order);
 
+//        4. 응답 데이터 조회 및 반환(흐름 제어)
         return orderRepository.findByOrderIdAndUserId(userId, savedOrder.getOrderId());
     }
 
@@ -71,33 +66,19 @@ public class OrderService {
 //        1. 기존 주문 조회 및 존재 여부 확인
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("수정할 주문을 찾을 수 없습니다."));
-//        2. 해당 유저 확인
-        if (!order.getUserId().equals(userId)) {
-            throw new RuntimeException("수정 권한이 없습니다.");
-        }
-//        3. 주문 상태 - PENDING만 수정 가능
-        if (order.getOrderStatus() != OrderStatus.PENDING) {
-            throw new RuntimeException("주문 상태는 PENDING만 수정 가능합니다.");
-        }
 
-//        4. 주문 상태 확인 - 부분 체결 경우 수정 X
-        if (order.getOrderExecutedCount() > 0) {
-            throw new RuntimeException("이미 체결된 주문은 수정할 수 없습니다.");
-        }
-//        5. 주문 수정 - 수량은 1 이상 필수
-        if (orderReqDTO.getOrderCount() <= 0) {
-            throw new RuntimeException("주문 수량은 1 이상 필수 입니다.");
-        }
-//        6. 주문 가격 - 가격은 양수 필수
-        if (orderReqDTO.getOrderPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("주문 가격은 0보다 커야 합니다.");
-        }
-//        주문 수정- 더티체킹으로 자동 UPDATE
+        //        주문 수정- 더티체킹으로 자동 UPDATE
         /* 더티체킹 : JPA 가 Entity의 변경사항을 자동으로 감지하는 기능
         * @Transactional 안에서 Enttiy를 조회하고 수정하면 자동으로 UPDATE 쿼리 실행
         * orderRepository.save()를 호출하지 않아도 됩니다. */
+
+//        2. Entity에게 권한 검증 위임
+        order.validateOwnership(userId);
+
+//        3. Entity에게 수정 로직 위임(Entity가 비즈니스 규칙 처리)
         order.updateOrder(orderReqDTO.getOrderCount(), orderReqDTO.getOrderPrice());
 
+//        4. 응답 데이터 반환(흐름 제어) - 더티체킹으로 자동 저장됨
         return orderRepository.findByOrderIdAndUserId(userId, order.getOrderId());
     }
 

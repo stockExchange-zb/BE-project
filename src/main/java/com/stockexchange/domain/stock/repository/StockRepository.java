@@ -36,6 +36,7 @@ public interface StockRepository extends JpaRepository<StockEntity, Long> {
                 stockPrice
             )
             FROM StockEntity
+            WHERE stockId = :stockId
             """)
     StockResDTO findByStockId(@Param("stockId") Long stockId);
 }

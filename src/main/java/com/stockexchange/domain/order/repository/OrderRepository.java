@@ -48,4 +48,13 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
             ORDER BY o.createdAt DESC
             """)
     OrderDetailResDTO findByOrderIdAndUserId(@Param("userId") Long userId, @Param("orderId")Long orderId);
+
+//    PENDING 상태의 주문들을 생성시간 순으로 조회
+    @Query("""
+            SELECT o FROM OrderEntity o
+            WHERE o.orderStatus = 'PENDING'
+            AND o.orderRemainCount > 0
+            ORDER BY o.createdAt ASC
+            """)
+    List<OrderEntity> findPendingOrdersByCreatedAt();
 }

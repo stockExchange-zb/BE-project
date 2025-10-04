@@ -1,10 +1,8 @@
 package com.stockexchange.domain.order.service;
 
-import com.stockexchange.domain.order.dto.OrderDetailResDTO;
-import com.stockexchange.domain.order.dto.OrderListResDTO;
-import com.stockexchange.domain.order.dto.OrderReqDTO;
+import com.stockexchange.domain.order.domain.Order;
+import com.stockexchange.domain.order.dto.OrderReqV1;
 import com.stockexchange.domain.order.entity.OrderEntity;
-import com.stockexchange.domain.order.entity.OrderStatus;
 import com.stockexchange.domain.order.repository.OrderRepository;
 import com.stockexchange.domain.stock.entity.StockEntity;
 import com.stockexchange.domain.stock.repository.StockRepository;
@@ -13,8 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -26,64 +24,81 @@ public class OrderService {
 
     //    주문 목록 전체 조회
     @Transactional(readOnly = true)
-    public List<OrderListResDTO> getAllOrders(Long userId) {
-        return orderRepository.findAllByUserId(userId);
+    public List<Order> getAllOrders(Long userId) {
+        List<OrderEntity> orderEntityList = orderRepository.findAllByUserId(userId);
+
+        return orderEntityList.stream()
+                .map(Order::from)
+                .collect(Collectors.toList());
     }
 
     //    특정 주문 상세 조회
     @Transactional(readOnly = true)
-    public OrderDetailResDTO getOrderDetail(Long userId, Long orderId) {
-        return orderRepository.findByOrderIdAndUserId(userId, orderId);
+    public Order getOrderDetail(Long userId, Long orderId) {
+        OrderEntity orderEntity = orderRepository.findByOrderIdAndUserId(orderId, userId);
+        if (orderEntity == null) {
+            throw new IllegalArgumentException("주문을 찾을 수 없습니다.: " + orderId);
+        }
+
+
+        return Order.from(orderEntity);
     }
 
     //    주문 등록
     @Transactional
-    public OrderDetailResDTO createOrder(Long userId, OrderReqDTO orderReqDTO) {
-//                Stock 조회
-//        1. 필요한 데이터 조회(흐름 제어)
-        StockEntity stock = stockRepository.findById(orderReqDTO.getStockId())
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 종목입니다. : " + orderReqDTO.getStockId()));
+    public Order createOrder(Long userId, OrderReqV1 orderReqV1) {
+//        1. StockEntity  조회
+        StockEntity stockEntity = stockRepository.findById(orderReqV1.getStockId())
+                .orElseThrow(() -> new IllegalArgumentException("주문하시는 종목이 존재하지 않습니다.: " + orderReqV1.getStockId()));
 
-//        2. Entity 에게 자신의 생성을 위임(Entity가 비즈니스 규칙 처리)
-        OrderEntity order = OrderEntity.createOrder(
-                orderReqDTO.getOrderCount(),
-                orderReqDTO.getOrderPrice(),
-                orderReqDTO.getOrderType(),
-                stock,
+//        2. createOrder
+        OrderEntity orderEntity = OrderEntity.createOrder(
+                orderReqV1.getOrderCount(),
+                orderReqV1.getOrderPrice(),
+                orderReqV1.getOrderType(),
+                stockEntity,
                 userId
         );
 
-//        3. 저장(흐름 제어)
-        OrderEntity savedOrder = orderRepository.save(order);
+//        3. 저장
+        orderRepository.save(orderEntity);
 
-//        4. 응답 데이터 조회 및 반환(흐름 제어)
-        return orderRepository.findByOrderIdAndUserId(userId, savedOrder.getOrderId());
+//        4. Entity -> Domain 변환 후 반환
+        return Order.from(orderEntity);
     }
 
     //    주문 수정
     @Transactional
-    public OrderDetailResDTO updateOrder(Long userId, Long orderId, OrderReqDTO orderReqDTO) {
+    public Order updateOrder(Long userId, Long orderId, OrderReqV1 orderReqV1) {
 //        1. 기존 주문 조회 및 존재 여부 확인
-        OrderEntity order = orderRepository.findById(orderId)
+        OrderEntity orderEntity = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("수정할 주문을 찾을 수 없습니다."));
+
+//        소유자 검증
+        orderEntity.validateOwnership(userId);
+
+//        Entity의 updateOrder 메서드 사용(더티체킹)
+        orderEntity.updateOrder(orderReqV1.getOrderCount(), orderReqV1.getOrderPrice());
 
         //        주문 수정- 더티체킹으로 자동 UPDATE
         /* 더티체킹 : JPA 가 Entity의 변경사항을 자동으로 감지하는 기능
-        * @Transactional 안에서 Enttiy를 조회하고 수정하면 자동으로 UPDATE 쿼리 실행
-        * orderRepository.save()를 호출하지 않아도 됩니다. */
+         * @Transactional 안에서 Enttiy를 조회하고 수정하면 자동으로 UPDATE 쿼리 실행
+         * orderRepository.save()를 호출하지 않아도 됩니다. */
 
-//        2. Entity에게 권한 검증 위임
-        order.validateOwnership(userId);
-
-//        3. Entity에게 수정 로직 위임(Entity가 비즈니스 규칙 처리)
-        order.updateOrder(orderReqDTO.getOrderCount(), orderReqDTO.getOrderPrice());
-
-//        4. 응답 데이터 반환(흐름 제어) - 더티체킹으로 자동 저장됨
-        return orderRepository.findByOrderIdAndUserId(userId, order.getOrderId());
+        return Order.from(orderEntity);
     }
 
     //    주문 삭제
-    public OrderReqDTO deleteOrder(Long userId, Long orderId) {
-        return null;
+    @Transactional
+    public void deleteOrder(Long userId, Long orderId) {
+        OrderEntity orderEntity = orderRepository.findByOrderIdAndUserId(orderId, userId);
+
+        Order order = Order.from(orderEntity);
+
+//        비즈니스 로직: 취소 가능 여부 체크
+        if (!order.canCancel()) {
+            throw new IllegalStateException("체결된 주문은 취소할 수 없습니다.");
+        }
+        orderRepository.deleteById(orderId);
     }
 }

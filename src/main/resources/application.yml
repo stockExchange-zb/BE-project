@@ -16,3 +16,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+    defer-datasource-initialization: true # JPA 테이블 생성 후 SQL 실행
+  sql:
+    init:
+      mode: always # 항상 SQL 스크립트 실행
+      data-locations: classpath:data.sql
+      continue-on-error: true # 에러 발생 시에도 계속 진행

@@ -3,6 +3,8 @@ package com.stockexchange.domain.order.entity;
 import com.stockexchange.domain.stock.entity.StockEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -15,6 +17,8 @@ import java.time.ZonedDateTime;
 
 @Entity
 @Getter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "order_table")
 public class OrderEntity {
@@ -60,20 +64,6 @@ public class OrderEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    //    OrderRepositoryTest 위한 생성자
-    public OrderEntity(int orderCount, BigDecimal orderPrice, OrderType orderType, OrderStatus orderStatus, int orderRemainCount, int orderExecutedCount, ZonedDateTime createdAt, ZonedDateTime updatedAt, StockEntity stock, Long userId) {
-        this.orderCount = orderCount;
-        this.orderPrice = orderPrice;
-        this.orderType = orderType;
-        this.orderStatus = orderStatus;
-        this.orderRemainCount = orderRemainCount;
-        this.orderExecutedCount = orderExecutedCount;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.stock = stock;
-        this.userId = userId;
-    }
-
     //    Rich Entity : 자신을 생성하는 비즈니스 규칙 포함
     public static OrderEntity createOrder(int orderCount, BigDecimal orderPrice, OrderType orderType, StockEntity stockId, Long userId) {
 
@@ -109,7 +99,7 @@ public class OrderEntity {
 
     //    비즈니스 규칙 검증 메서드==================================================
 
-//    수정 가능 여부 검증 로직
+    //    수정 가능 여부 검증 로직
     private void validateCanModify() {
         if (this.orderStatus != OrderStatus.PENDING) {
             throw new IllegalArgumentException("PENDING 상태의 주문만 수정할 수 있습니다. 현재 상태: " + this.orderStatus);
@@ -119,14 +109,14 @@ public class OrderEntity {
         }
     }
 
-//    회원 확인 로직
+    //    회원 확인 로직
     private static void validateUserId(Long userId) {
         if (userId == null) {
             throw new IllegalArgumentException("회원만 거래할 수 있습니다.");
         }
     }
 
-//    거래 가능 시간 확인 로직
+    //    거래 가능 시간 확인 로직
     private static void validateTradingHours() {
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
         LocalTime currentTime = now.toLocalTime();
@@ -139,7 +129,7 @@ public class OrderEntity {
         }
     }
 
-//    종목 확인 로직
+    //    종목 확인 로직
     private static void validateStock(StockEntity stock) {
         if (stock == null) {
             throw new IllegalArgumentException("종목 정보는 필수입니다.");
@@ -147,9 +137,9 @@ public class OrderEntity {
 
     }
 
-//    소유자 검증 로직
+    //    소유자 검증 로직
     public void validateOwnership(Long requestUserId) {
-        if(this.userId.equals(requestUserId)) {
+        if (!this.userId.equals(requestUserId)) {
             throw new IllegalArgumentException("주문 수정/취소 권한이 없습니다.");
         }
     }

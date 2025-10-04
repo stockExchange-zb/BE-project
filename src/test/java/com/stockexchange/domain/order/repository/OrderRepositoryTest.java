@@ -1,8 +1,6 @@
 package com.stockexchange.domain.order.repository;
 
 import com.stockexchange.config.EmbeddedRedisConfig;
-import com.stockexchange.domain.order.dto.OrderDetailResDTO;
-import com.stockexchange.domain.order.dto.OrderListResDTO;
 import com.stockexchange.domain.order.entity.OrderEntity;
 import com.stockexchange.domain.order.entity.OrderStatus;
 import com.stockexchange.domain.order.entity.OrderType;
@@ -76,7 +74,7 @@ class OrderRepositoryTest {
         entityManager.flush();
 
 //        When: 사용자별 주문 목록 조회
-        List<OrderListResDTO> result = orderRepository.findAllByUserId(userId);
+        List<OrderEntity> result = orderRepository.findAllByUserId(userId);
 
 //        Then: 주문 조회 결과 검증
         Assertions.assertNotNull(result);
@@ -91,7 +89,7 @@ class OrderRepositoryTest {
         Long notExistOrderId = 999L;
 
 //        When: 존재하지 않는 주문 조회
-        OrderDetailResDTO result = orderRepository.findByOrderIdAndUserId(notExistOrderId, userId);
+        OrderEntity result = orderRepository.findByOrderIdAndUserId(notExistOrderId, userId);
 
 //        Then: null 값 반환
         Assertions.assertNull(orderRepository.findByOrderIdAndUserId(notExistOrderId, userId));
@@ -109,11 +107,11 @@ class OrderRepositoryTest {
         entityManager.flush();
 
 //      When: 주문 상세 조회
-        OrderDetailResDTO orderDetailResDTO = orderRepository.findByOrderIdAndUserId(result.getOrderId(), userId);
+        OrderEntity orderDetailResV1 = orderRepository.findByOrderIdAndUserId(result.getOrderId(), userId);
 
 //        Then : 조회 결과 검증
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(orderDetailResDTO.getOrderId(), result.getOrderId());
+        Assertions.assertEquals(orderDetailResV1.getOrderId(), result.getOrderId());
     }
 
     @Test
@@ -124,7 +122,7 @@ class OrderRepositoryTest {
         Long notExistOrderId = 999L;
 
 //        When: 존재하지 않는 주문 조회
-        OrderDetailResDTO result = orderRepository.findByOrderIdAndUserId(notExistOrderId, userId);
+        OrderEntity result = orderRepository.findByOrderIdAndUserId(notExistOrderId, userId);
 
 //        Then: Null 값 반환
         Assertions.assertNull(result);
@@ -173,8 +171,8 @@ class OrderRepositoryTest {
 //        When & Then : 예외 발생 검증
         Assertions.assertThrows(Exception.class,
                 () -> {
-            orderRepository.save(order1);
-            entityManager.flush();
+                    orderRepository.save(order1);
+                    entityManager.flush();
                 });
     }
 

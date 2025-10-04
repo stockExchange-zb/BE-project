@@ -1,18 +1,19 @@
 package com.stockexchange.domain.order.controller;
 
-import com.stockexchange.domain.order.dto.OrderDetailResDTO;
-import com.stockexchange.domain.order.dto.OrderListResDTO;
-import com.stockexchange.domain.order.dto.OrderReqDTO;
+import com.stockexchange.domain.order.domain.Order;
+import com.stockexchange.domain.order.dto.OrderDetailResV1;
+import com.stockexchange.domain.order.dto.OrderListResV1;
+import com.stockexchange.domain.order.dto.OrderReqV1;
 import com.stockexchange.domain.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,34 +28,49 @@ public class OrderController {
 
     @GetMapping("/{userId}/orders")
     @Operation(summary = "주문 전체 조회", description = "주문 목록 전체를 조회합니다")
-    public ResponseEntity<List<OrderListResDTO>> getAllOrders(@PathVariable Long userId) {
-        List<OrderListResDTO> orderListResDTOList = orderService.getAllOrders(userId);
-        return ResponseEntity.ok().body(orderListResDTOList);
+    public ResponseEntity<List<OrderListResV1>> getAllOrders(@PathVariable Long userId) {
+        List<Order> orders = orderService.getAllOrders(userId);
+
+//        Domain -> DTO 변환
+        List<OrderListResV1> response = orders.stream()
+                .map(OrderListResV1::from)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok().body(response);
     }
 
     @GetMapping("/{userId}/orders/{orderId}")
     @Operation(summary = "주문 상세 조회", description = "특정 주문을 상세 조회합니다.")
-    public ResponseEntity<OrderDetailResDTO> getOrderById(@PathVariable("userId") Long userId, @PathVariable("orderId") Long orderId) {
-        OrderDetailResDTO orderDetailResDTO = orderService.getOrderDetail(userId, orderId);
-        return ResponseEntity.ok().body(orderDetailResDTO);
+    public ResponseEntity<OrderDetailResV1> getOrderById(@PathVariable("userId") Long userId, @PathVariable("orderId") Long orderId) {
+        Order order = orderService.getOrderDetail(userId, orderId);
+
+//        Domain -> DTO
+        OrderDetailResV1 response = OrderDetailResV1.from(order);
+
+        return ResponseEntity.ok().body(response);
     }
 
     @PostMapping("/{userId}/orders")
     @Operation(summary = "주문 등록", description = "주문을 등록합니다.")
-    public ResponseEntity<OrderDetailResDTO> createOrder(@PathVariable Long userId, @Valid @RequestBody OrderReqDTO order) {
-        OrderDetailResDTO createOrder = orderService.createOrder(userId, order);
-//        return ResponseEntity.status(HttpStatus.CREATED).body(createOrder); // 201 Created 반환
-        return ResponseEntity.ok().body(createOrder);
+    public ResponseEntity<OrderDetailResV1> createOrder(@PathVariable Long userId, @Valid @RequestBody OrderReqV1 orderReqV1) {
+        Order order = orderService.createOrder(userId, orderReqV1);
+
+        OrderDetailResV1 response = OrderDetailResV1.from(order);
+
+        return ResponseEntity.ok().body(response);
     }
 
     @PutMapping("/{userId}/orders/{orderId}")
     @Operation(summary = "주문 수정", description = "체결되지 않은 주문을 수정합니다.")
-    public ResponseEntity<OrderDetailResDTO> updateOrderById(
+    public ResponseEntity<OrderDetailResV1> updateOrderById(
             @Parameter(description = "사용자 아이디") @PathVariable Long userId,
             @Parameter(description = "주문 아이디") @PathVariable Long orderId,
-            @Parameter(description = "수정할 주문 정보") @RequestBody @Valid OrderReqDTO orderReqDTO) {
-        OrderDetailResDTO updateOrder = orderService.updateOrder(userId, orderId, orderReqDTO);
-        return ResponseEntity.ok(updateOrder);
+            @Parameter(description = "수정할 주문 정보") @RequestBody @Valid OrderReqV1 orderReqV1) {
+        Order order = orderService.updateOrder(userId, orderId, orderReqV1);
+
+        OrderDetailResV1 response = OrderDetailResV1.from(order);
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{userId}/orders/{orderId}")

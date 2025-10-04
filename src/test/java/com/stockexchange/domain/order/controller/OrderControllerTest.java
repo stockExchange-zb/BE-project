@@ -2,9 +2,9 @@ package com.stockexchange.domain.order.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stockexchange.config.EmbeddedRedisConfig;
-import com.stockexchange.domain.order.dto.OrderDetailResDTO;
-import com.stockexchange.domain.order.dto.OrderListResDTO;
-import com.stockexchange.domain.order.dto.OrderReqDTO;
+import com.stockexchange.domain.order.dto.OrderDetailResV1;
+import com.stockexchange.domain.order.dto.OrderListResV1;
+import com.stockexchange.domain.order.dto.OrderReqV1;
 import com.stockexchange.domain.order.entity.OrderStatus;
 import com.stockexchange.domain.order.entity.OrderType;
 import com.stockexchange.domain.order.service.OrderService;
@@ -105,10 +105,10 @@ class OrderControllerTest {
         Long userId = 1L;
         String userOrdersKey = USER_ORDERS_KEY + userId;
 
-        List<OrderListResDTO> expectedOrders = Arrays.asList(
-                new OrderListResDTO(1L, 10, OrderType.BUY, OrderStatus.PENDING, 100L, ZonedDateTime.now()),
-                new OrderListResDTO(2L, 20, OrderType.SELL, OrderStatus.CANCELLED, 200L, ZonedDateTime.now()),
-                new OrderListResDTO(3L, 30, OrderType.BUY, OrderStatus.COMPLETED, 300L, ZonedDateTime.now())
+        List<OrderListResV1> expectedOrders = Arrays.asList(
+                new OrderListResV1(1L, 10, OrderType.BUY, OrderStatus.PENDING, 100L, ZonedDateTime.now()),
+                new OrderListResV1(2L, 20, OrderType.SELL, OrderStatus.CANCELLED, 200L, ZonedDateTime.now()),
+                new OrderListResV1(3L, 30, OrderType.BUY, OrderStatus.COMPLETED, 300L, ZonedDateTime.now())
         );
 
 //        Redis에 주문 목록 저장
@@ -162,7 +162,7 @@ class OrderControllerTest {
         Long orderId = 10L;
         String orderDetailsKey = ORDER_PREFIX + userId + ":" + orderId;
 
-        OrderDetailResDTO orderDetailResDTO = new OrderDetailResDTO(
+        OrderDetailResV1 orderDetailResV1 = new OrderDetailResV1(
                 500L,
                 orderId,
                 25,
@@ -175,10 +175,10 @@ class OrderControllerTest {
                 ZonedDateTime.now()
         );
 
-        redisTemplate.opsForValue().set(orderDetailsKey, orderDetailResDTO);
+        redisTemplate.opsForValue().set(orderDetailsKey, orderDetailResV1);
 
 //        When: Redis에서 주문 상세 조회
-        OrderDetailResDTO redisResult = (OrderDetailResDTO) redisTemplate.opsForValue().get(orderDetailsKey);
+        OrderDetailResV1 redisResult = (OrderDetailResV1) redisTemplate.opsForValue().get(orderDetailsKey);
 
 //        Then: 데이터 검증
         Assertions.assertNotNull(redisResult);
@@ -217,7 +217,7 @@ class OrderControllerTest {
         String orderDetailKey = ORDER_PREFIX + userId + ":" + orderId; // "order:detail:null:null"
 
 //        When: 잘못된 키로 조회
-        OrderDetailResDTO redisResult = (OrderDetailResDTO) redisTemplate.opsForValue().get(orderDetailKey);
+        OrderDetailResV1 redisResult = (OrderDetailResV1) redisTemplate.opsForValue().get(orderDetailKey);
 
 //        Then: null 반환 확인
         Assertions.assertNull(redisResult);
@@ -232,11 +232,11 @@ class OrderControllerTest {
         Long orderId = 20L;
         String userOrdersKey = USER_ORDERS_KEY + userId;
         String orderDetailsKey = ORDER_PREFIX + userId + ":";
-        OrderReqDTO orderReqDTO = new OrderReqDTO(10, new BigDecimal("150000.00"), OrderType.BUY, stockId, userId);
+        OrderReqV1 orderReqV1 = new OrderReqV1(10, new BigDecimal("150000.00"), OrderType.BUY, stockId, userId);
 
 //      예상되는 등록 후 결과(생성될 주문 데이터)
         Long expectedOrderId = 1L;
-        OrderDetailResDTO orderDetailResDTO = new OrderDetailResDTO(
+        OrderDetailResV1 orderDetailResV1 = new OrderDetailResV1(
                 stockId,
                 expectedOrderId,
                 10,
@@ -251,11 +251,11 @@ class OrderControllerTest {
 
 //        When: 주문 등록 실행
 //        Redis에 주문 저장(실제 서비스에서는 OrderService.createOrder() 호출)
-        redisTemplate.opsForValue().set(orderDetailsKey + expectedOrderId, orderDetailResDTO);
+        redisTemplate.opsForValue().set(orderDetailsKey + expectedOrderId, orderDetailResV1);
         redisTemplate.opsForList().rightPush(userOrdersKey, expectedOrderId);
 
 //        Then: 등록 결과 검증
-        OrderDetailResDTO saveOrderDetail = (OrderDetailResDTO) redisTemplate.opsForValue().get(orderDetailsKey + expectedOrderId);
+        OrderDetailResV1 saveOrderDetail = (OrderDetailResV1) redisTemplate.opsForValue().get(orderDetailsKey + expectedOrderId);
         Assertions.assertNotNull(saveOrderDetail);
         Assertions.assertEquals(stockId, saveOrderDetail.getStockId());
         Assertions.assertEquals(expectedOrderId, saveOrderDetail.getOrderId());
@@ -274,16 +274,16 @@ class OrderControllerTest {
         Long orderId = 20L;
         String userOrdersKey = USER_ORDERS_KEY + userId;
         String orderDetailsKey = ORDER_PREFIX + userId + ":";
-        OrderReqDTO orderReqDTO = new OrderReqDTO(10, new BigDecimal("150000.00"), OrderType.BUY, stockId, userId);
+        OrderReqV1 orderReqV1 = new OrderReqV1(10, new BigDecimal("150000.00"), OrderType.BUY, stockId, userId);
 
 //        When & Then : 예외 발생 검증
         IllegalArgumentException exception = Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> {
-                    if (orderReqDTO.getUserId() == null) {
+                    if (orderReqV1.getUserId() == null) {
                         throw new IllegalArgumentException("사용자 ID는 필수입니다.");
                     }
-                    redisTemplate.opsForValue().set(orderDetailsKey + stockId, orderReqDTO);
+                    redisTemplate.opsForValue().set(orderDetailsKey + stockId, orderReqV1);
                 }
         );
 //        예외 메세지 검증
@@ -299,16 +299,16 @@ class OrderControllerTest {
         Long orderId = 20L;
         String userOrdersKey = USER_ORDERS_KEY + userId;
         String orderDetailsKey = ORDER_PREFIX + userId + ":";
-        OrderReqDTO orderReqDTO = new OrderReqDTO(0, new BigDecimal("150000.00"), OrderType.BUY, stockId, userId);
+        OrderReqV1 orderReqV1 = new OrderReqV1(0, new BigDecimal("150000.00"), OrderType.BUY, stockId, userId);
 
 //        When & Then : 예외 발생 검증
         IllegalArgumentException exception = Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> {
-                    if (orderReqDTO.getOrderCount() <= 0) {
+                    if (orderReqV1.getOrderCount() <= 0) {
                         throw new IllegalArgumentException("주문 수량은 필수 입력입니다.");
                     }
-                    redisTemplate.opsForValue().set(orderDetailsKey + stockId, orderReqDTO);
+                    redisTemplate.opsForValue().set(orderDetailsKey + stockId, orderReqV1);
                 }
         );
         Assertions.assertEquals("주문 수량은 필수 입력입니다.", exception.getMessage());
@@ -321,7 +321,7 @@ class OrderControllerTest {
         Long userId = 1L;
         Long stockId = 10L;
         Long orderId = 20L;
-        OrderReqDTO orderReqDTO = new OrderReqDTO(
+        OrderReqV1 orderReqV1 = new OrderReqV1(
                 10,
                 new BigDecimal("1500.00"),
                 OrderType.BUY,
@@ -329,19 +329,19 @@ class OrderControllerTest {
                 userId
         );
 
-        OrderDetailResDTO orderDetailResDTO = new OrderDetailResDTO(
+        OrderDetailResV1 orderDetailResV1 = new OrderDetailResV1(
                 10L, 1L, 10, new BigDecimal("15000.00"),
                 OrderType.BUY, OrderStatus.PENDING, 10, 0,
                 ZonedDateTime.now(), ZonedDateTime.now()
         );
 
 //        Mock 설정
-        when(orderService.updateOrder(userId, orderId, any(OrderReqDTO.class))).thenReturn(orderDetailResDTO);
+        when(orderService.updateOrder(userId, orderId, any(OrderReqV1.class))).thenReturn(orderDetailResV1);
 
 //        When & Then - HTTP 요청 실행
         mockMvc.perform(put("/api/v1/users/{userId}/orders/{orderId}", userId, orderId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(orderReqDTO)))
+                .content(objectMapper.writeValueAsString(orderReqV1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.orderId").value(orderId))
                 .andExpect(jsonPath("$.orderCount").value(10))

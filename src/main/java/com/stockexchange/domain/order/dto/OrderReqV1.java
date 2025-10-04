@@ -4,16 +4,12 @@ import com.stockexchange.domain.order.entity.OrderType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Data
-public class OrderReqDTO {
+@Getter
+public class OrderReqV1 {
 
     @NotNull(message = "주문 수량은 필수 입니다.")
     @Min(value = 1, message = "주문 수량은 1 이상 필수 입니다.")

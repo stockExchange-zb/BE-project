@@ -1,3 +1,18 @@
+USE stock;
+
+-- 외래키 체크 비활성화
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- 기존 데이터 삭제
+TRUNCATE TABLE holding;
+TRUNCATE TABLE execution;
+TRUNCATE TABLE order_table;
+TRUNCATE TABLE stock;
+TRUNCATE TABLE users;
+
+-- 외래키 체크 활성화
+SET FOREIGN_KEY_CHECKS = 1;
+
 INSERT IGNORE INTO users (user_name, user_krw_price, created_at) VALUES
 ('김투자', 10000000.00, NOW()),
 ('박거래', 5000000.00, NOW()),

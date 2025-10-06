@@ -3,7 +3,6 @@ package com.stockexchange.domain.order.domain;
 import com.stockexchange.domain.order.entity.OrderEntity;
 import com.stockexchange.domain.order.entity.OrderStatus;
 import com.stockexchange.domain.order.entity.OrderType;
-import com.stockexchange.domain.stock.entity.StockEntity;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -50,25 +49,5 @@ public class Order {
                 .createdAt(orderEntity.getCreatedAt())
                 .updatedAt(orderEntity.getUpdatedAt())
                 .build();
-    }
-
-    //    Domain -> Entity 변환 (생성/수정 시)
-    public OrderEntity toEntity(StockEntity stockEntity) {
-        OrderEntity.OrderEntityBuilder builder = OrderEntity.builder()
-                .userId(this.userId)
-                .orderCount(this.orderCount)
-                .orderPrice(this.orderPrice)
-                .orderType(this.orderType)
-                .orderStatus(this.orderStatus != null ? this.orderStatus : OrderStatus.PENDING)
-                .orderRemainCount(this.orderRemainCount)
-                .orderExecutedCount(this.orderExecutedCount)
-                .stock(stockEntity);
-
-//         수정 시에만 orderId 설정
-        if (this.orderId != null) {
-            builder.orderId(this.orderId);
-        }
-        return builder.build();
-
     }
 }

@@ -97,6 +97,14 @@ public class OrderEntity {
         this.updatedAt = ZonedDateTime.now(); // 수정 시간 업데이트
     }
 
+//    체결 후 주문 정보 업데이트
+    public void updateExecutionInfo(int orderExecutedCount, int orderRemainCount, OrderStatus orderStatus) {
+        this.orderExecutedCount = orderExecutedCount;
+        this.orderRemainCount = orderRemainCount;
+        this.orderStatus = orderStatus;
+        this.updatedAt = ZonedDateTime.now();
+    }
+
     //    비즈니스 규칙 검증 메서드==================================================
 
     //    수정 가능 여부 검증 로직

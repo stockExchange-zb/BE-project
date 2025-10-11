@@ -4,11 +4,17 @@ import com.stockexchange.domain.order.entity.OrderType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OrderReqV1 {
 
     @NotNull(message = "주문 수량은 필수 입니다.")
@@ -21,6 +27,4 @@ public class OrderReqV1 {
     private OrderType orderType;
     @NotNull(message = "종목 ID는 필수 입니다.")
     private Long stockId;
-    @NotNull(message = "사용자 ID는 필수 입니다.")
-    private Long userId;
 }

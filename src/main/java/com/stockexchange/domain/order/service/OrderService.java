@@ -24,8 +24,8 @@ public class OrderService {
 
     //    주문 목록 전체 조회
     @Transactional(readOnly = true)
-    public List<Order> getAllOrders(Long userId) {
-        List<OrderEntity> orderEntityList = orderRepository.findAllByUserId(userId);
+    public List<Order> getAllOrders(final Long userId) {
+        final List<OrderEntity> orderEntityList = orderRepository.findAllByUserId(userId);
 
         return orderEntityList.stream()
                 .map(Order::from)
@@ -34,8 +34,8 @@ public class OrderService {
 
     //    특정 주문 상세 조회
     @Transactional(readOnly = true)
-    public Order getOrderDetail(Long userId, Long orderId) {
-        OrderEntity orderEntity = orderRepository.findByOrderIdAndUserId(orderId, userId);
+    public Order getOrderDetail(final Long userId, final Long orderId) {
+        final OrderEntity orderEntity = orderRepository.findByOrderIdAndUserId(orderId, userId);
         if (orderEntity == null) {
             throw new IllegalArgumentException("주문을 찾을 수 없습니다.: " + orderId);
         }
@@ -46,13 +46,14 @@ public class OrderService {
 
     //    주문 등록
     @Transactional
-    public Order createOrder(Long userId, OrderReqV1 orderReqV1) {
+    public Order createOrder(final Long userId,final OrderReqV1 orderReqV1) {
 //        1. StockEntity  조회
-        StockEntity stockEntity = stockRepository.findById(orderReqV1.getStockId())
+        final StockEntity stockEntity = stockRepository.findById(orderReqV1.getStockId())
                 .orElseThrow(() -> new IllegalArgumentException("주문하시는 종목이 존재하지 않습니다.: " + orderReqV1.getStockId()));
 
 //        2. createOrder
-        OrderEntity orderEntity = OrderEntity.createOrder(
+//        DTO 정보로 Entity 직접 생성
+        final OrderEntity orderEntity = OrderEntity.createOrder(
                 orderReqV1.getOrderCount(),
                 orderReqV1.getOrderPrice(),
                 orderReqV1.getOrderType(),
@@ -69,9 +70,9 @@ public class OrderService {
 
     //    주문 수정
     @Transactional
-    public Order updateOrder(Long userId, Long orderId, OrderReqV1 orderReqV1) {
+    public Order updateOrder(final Long userId,final Long orderId, final OrderReqV1 orderReqV1) {
 //        1. 기존 주문 조회 및 존재 여부 확인
-        OrderEntity orderEntity = orderRepository.findById(orderId)
+        final OrderEntity orderEntity = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("수정할 주문을 찾을 수 없습니다."));
 
 //        소유자 검증
@@ -90,10 +91,10 @@ public class OrderService {
 
     //    주문 삭제
     @Transactional
-    public void deleteOrder(Long userId, Long orderId) {
-        OrderEntity orderEntity = orderRepository.findByOrderIdAndUserId(orderId, userId);
+    public void deleteOrder(final Long userId, final Long orderId) {
+        final OrderEntity orderEntity = orderRepository.findByOrderIdAndUserId(orderId, userId);
 
-        Order order = Order.from(orderEntity);
+        final Order order = Order.from(orderEntity);
 
 //        비즈니스 로직: 취소 가능 여부 체크
         if (!order.canCancel()) {
